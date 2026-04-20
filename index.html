@@ -117,11 +117,15 @@
             z-index: 50;
             border-radius: 12px;
             display: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .item-row {
             padding: 10px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
+        }
+        .item-row:hover {
+            background-color: #e8f5e9;
         }
         .cart-item {
             background: #f8f9fa;
@@ -147,6 +151,7 @@
         .loading { display: none; text-align: center; padding: 12px; color: #2b7a3e; }
         .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
         .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+        .debug-info { background: #fff3cd; padding: 8px; margin-bottom: 10px; font-size: 12px; display: none; }
     </style>
 </head>
 <body>
@@ -191,8 +196,11 @@
                 currentUser.name = tg.initDataUnsafe.user.first_name || "User";
             }
             const url = `${SCRIPT_URL}?userId=${currentUser.id || ''}`;
+            console.log("Fetching data from:", url);
             const res = await fetch(url);
             const data = await res.json();
+            console.log("Received data:", data);
+            
             appData.stockIn = data.stockIn || [];
             appData.stockOut = data.stockOut || [];
             appData.balance = data.balance || [];
@@ -202,12 +210,15 @@
             zonesList = data.zones || [];
             depotZoneMap = data.depotZoneMap || {};
             
+            console.log("Items loaded:", appData.items.length);
+            
             renderTable('balance', appData.balance);
             renderTable('boq', appData.boq);
             renderStockLogs('stock_in', appData.stockIn);
             renderStockLogs('stock_out', appData.stockOut);
             initForms();
         } catch (e) {
+            console.error("Fetch error:", e);
             showAlert("ទាញទិន្នន័យបរាជ័យ: " + e.message);
         }
     }
@@ -321,66 +332,95 @@
     }
 
     function initForms() {
+        console.log("initForms called, items count:", appData.items.length);
         ['in', 'out'].forEach(type => {
-            const depotSelect = document.getElementById(`${type}-depot`);
-            const zoneSelect = document.getElementById(`${type}-zone`);
             const searchInput = document.getElementById(`${type}-search`);
             const resultsDiv = document.getElementById(`${type}-results`);
-            const addBtn = document.getElementById(`${type}-add`);
-            const photoInput = document.getElementById(`${type}-photo`);
-            const previewDiv = document.getElementById(`${type}-preview`);
-
-            // 1. Depot dropdown
-            if (depotSelect && depotsList.length) {
-                depotsList.forEach(d => depotSelect.add(new Option(d, d)));
+            
+            if (!searchInput) {
+                console.warn(`Search input not found for ${type}`);
+                return;
             }
-
-            // 2. BOQ dropdown - show all zones (not filtered by depot)
-            if (zoneSelect && zonesList.length) {
-                zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
-                zonesList.forEach(z => zoneSelect.add(new Option(z, z)));
+            if (!resultsDiv) {
+                console.warn(`Results div not found for ${type}`);
+                return;
             }
-
-            // 3. Date
-            const dateInput = document.getElementById(`${type}-date`);
-            if (dateInput) dateInput.valueAsDate = new Date();
-
-            // 4. Search products
-            if (searchInput && resultsDiv) {
-                searchInput.addEventListener('input', () => {
-                    const kw = searchInput.value.toLowerCase();
-                    if (kw.length < 2) {
-                        resultsDiv.style.display = 'none';
-                        return;
-                    }
-                    const matches = appData.items.filter(i =>
-                        (i.name && i.name.toLowerCase().includes(kw)) ||
-                        (i.code && i.code.toLowerCase().includes(kw))
-                    );
-                    resultsDiv.innerHTML = '';
-                    matches.slice(0, 10).forEach(item => {
+            
+            // Clear any existing listeners to avoid duplicates
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+            const newResultsDiv = resultsDiv.cloneNode(true);
+            resultsDiv.parentNode.replaceChild(newResultsDiv, resultsDiv);
+            
+            const finalSearchInput = document.getElementById(`${type}-search`);
+            const finalResultsDiv = document.getElementById(`${type}-results`);
+            
+            finalSearchInput.addEventListener('input', (e) => {
+                const kw = finalSearchInput.value.toLowerCase().trim();
+                console.log(`Searching for: "${kw}"`);
+                if (kw.length < 2) {
+                    finalResultsDiv.style.display = 'none';
+                    finalResultsDiv.innerHTML = '';
+                    return;
+                }
+                const matches = appData.items.filter(i => 
+                    (i.name && i.name.toLowerCase().includes(kw)) || 
+                    (i.code && i.code.toLowerCase().includes(kw))
+                );
+                console.log(`Found ${matches.length} matches`);
+                finalResultsDiv.innerHTML = '';
+                if (matches.length === 0) {
+                    const noResult = document.createElement('div');
+                    noResult.className = 'item-row';
+                    noResult.innerText = 'រកមិនឃើញទំនិញ';
+                    finalResultsDiv.appendChild(noResult);
+                } else {
+                    matches.slice(0, 15).forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'item-row';
                         div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
                         div.onclick = () => {
                             selectedItems[type] = item;
-                            searchInput.value = item.name;
-                            resultsDiv.style.display = 'none';
+                            finalSearchInput.value = item.name;
+                            finalResultsDiv.style.display = 'none';
+                            console.log(`Selected: ${item.name}`);
                         };
-                        resultsDiv.appendChild(div);
+                        finalResultsDiv.appendChild(div);
                     });
-                    resultsDiv.style.display = matches.length ? 'block' : 'none';
-                });
-                document.addEventListener('click', (e) => {
-                    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-                        resultsDiv.style.display = 'none';
-                    }
-                });
+                }
+                finalResultsDiv.style.display = 'block';
+            });
+            
+            // Close when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!finalSearchInput.contains(e.target) && !finalResultsDiv.contains(e.target)) {
+                    finalResultsDiv.style.display = 'none';
+                }
+            });
+            
+            // Depot and Zone dropdowns (existing code)
+            const depotSelect = document.getElementById(`${type}-depot`);
+            const zoneSelect = document.getElementById(`${type}-zone`);
+            if (depotSelect && depotsList.length) {
+                depotsList.forEach(d => depotSelect.add(new Option(d, d)));
             }
-
-            // 5. Add to cart button
+            if (zoneSelect && zonesList.length) {
+                zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
+                zonesList.forEach(z => zoneSelect.add(new Option(z, z)));
+            }
+            
+            // Date
+            const dateInput = document.getElementById(`${type}-date`);
+            if (dateInput) dateInput.valueAsDate = new Date();
+            
+            // Add to cart button
+            const addBtn = document.getElementById(`${type}-add`);
             if (addBtn) {
-                addBtn.onclick = () => {
+                // Remove old listeners
+                const newAddBtn = addBtn.cloneNode(true);
+                addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+                const finalAddBtn = document.getElementById(`${type}-add`);
+                finalAddBtn.onclick = () => {
                     const qty = parseInt(document.getElementById(`${type}-qty`).value);
                     const item = selectedItems[type];
                     if (!item) return showAlert('ជ្រើសរើសទំនិញ');
@@ -389,19 +429,23 @@
                     if (existing) existing.qty += qty;
                     else carts[type].push({ ...item, qty });
                     renderCart(type);
-                    if (searchInput) searchInput.value = '';
-                    const qtyInput = document.getElementById(`${type}-qty`);
-                    if (qtyInput) qtyInput.value = '';
+                    finalSearchInput.value = '';
+                    document.getElementById(`${type}-qty`).value = '';
                     selectedItems[type] = null;
                     showAlert(`បានបន្ថែម ${item.name} ${qty}`);
                 };
             }
-
-            // 6. Image preview
+            
+            // Image preview
+            const photoInput = document.getElementById(`${type}-photo`);
+            const previewDiv = document.getElementById(`${type}-preview`);
             if (photoInput && previewDiv) {
-                photoInput.addEventListener('change', () => {
+                const newPhotoInput = photoInput.cloneNode(true);
+                photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
+                const finalPhotoInput = document.getElementById(`${type}-photo`);
+                finalPhotoInput.addEventListener('change', () => {
                     previewDiv.innerHTML = '';
-                    selectedFiles[type] = Array.from(photoInput.files);
+                    selectedFiles[type] = Array.from(finalPhotoInput.files);
                     selectedFiles[type].forEach(f => {
                         const reader = new FileReader();
                         reader.onload = e => {
@@ -414,11 +458,13 @@
                     });
                 });
             }
-
-            // 7. Submit button (already attached via onclick in createPages? but we'll add here too)
+            
+            // Submit button
             const submitBtn = document.getElementById(`${type}-submit`);
             if (submitBtn) {
-                submitBtn.onclick = () => submitStock(type);
+                const newSubmitBtn = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
+                document.getElementById(`${type}-submit`).onclick = () => submitStock(type);
             }
         });
     }
