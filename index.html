@@ -2,268 +2,702 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock App Pro - Chantrea</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Stock App - Chantrea</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system; background: #f0f2f5; margin: 0; padding-bottom: 80px; }
-        
-        /* Navigation ខាងក្រោម */
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: none; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; border-top: 1px solid #eee; }
-        .nav-item { flex: 1; text-align: center; padding: 12px 0; cursor: pointer; font-size: 11px; font-weight: bold; color: #6c757d; transition: 0.3s; }
-        .nav-item.active { color: #2b7a3e; border-top: 3px solid #2b7a3e; background: #f9fdfa; }
-        
-        /* ទម្រង់ទូទៅ */
-        .page { display: none; padding: 12px; animation: fadeIn 0.3s; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0 0 70px 0;
+        }
+        /* Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-item {
+            text-align: center;
+            padding: 6px 0;
+            flex: 1;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: 0.2s;
+            color: #6c757d;
+        }
+        .nav-item.active {
+            background: #2b7a3e;
+            color: white;
+        }
+        .nav-icon { font-size: 24px; display: block; }
+        .nav-label { font-size: 11px; margin-top: 4px; }
+
+        /* Main Content */
+        .page { display: none; padding: 12px; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        h3 { margin: 0 0 12px 0; font-size: 16px; color: #333; border-left: 4px solid #2b7a3e; padding-left: 10px; }
-        label { font-size: 12px; color: #888; display: block; margin-top: 12px; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 12px; font-size: 14px; outline: none; }
-        input:focus { border-color: #2b7a3e; }
-        
-        button { width: 100%; padding: 15px; background: #2b7a3e; color: white; border: none; border-radius: 12px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .card {
+            background: white;
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            color: #1a1a2e;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #6c757d;
+            display: block;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2b7a3e;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-out { background: #c0392b; }
         .btn-ai { background: #8e44ad; }
-        
-        /* ប្រព័ន្ធស្វែងរក */
-        .res-box { position: absolute; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; display: none; width: calc(100% - 56px); z-index: 50; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .item-row { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
-        .item-row:active { background: #f0f0f0; }
-        
-        /* បញ្ជីទំនិញក្នុងកញ្ចប់ */
-        .cart-item { background: #f8f9fa; padding: 10px 12px; margin: 8px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #2b7a3e; }
-        .remove-item { background: none; border: none; color: #c0392b; font-size: 18px; width: auto; padding: 0; margin: 0; }
-        
-        .photo-preview { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-        .preview-img { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
-        
-        #loading-screen { position: fixed; top:0; left:0; right:0; bottom:0; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .btn-add { background: #ff9800; margin-top: 12px; }
+
+        /* Search Results */
+        .res-box {
+            border: 1px solid #ddd;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px;
+            margin-top: 5px;
+            display: none;
+            position: absolute;
+            width: calc(100% - 32px);
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .item-row {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        .item-row:hover { background: #e8f5e9; }
+
+        /* Cart */
+        .cart-item {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cart-qty {
+            background: #2b7a3e;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .remove-item {
+            background: none;
+            border: none;
+            color: #c0392b;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .empty-cart {
+            color: #adb5bd;
+            text-align: center;
+            padding: 16px;
+            font-size: 13px;
+        }
+
+        /* Image Preview */
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .preview-img {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        /* AI & BOQ Results */
+        .ai-response, .boq-result {
+            background: #f3e8ff;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 12px;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        .boq-result { background: #e8f5e9; }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 12px;
+            color: #2b7a3e;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
 
-<div id="loading-screen">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid #2b7a3e; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p style="margin-top: 15px; color: #666;">កំពុងផ្ទៀងផ្ទាត់សិទ្ធិចូលប្រើ...</p>
-</div>
-
-<div class="bottom-nav" id="main-nav"></div>
-
-<div id="page-in" class="page">
-    <div class="card">
-        <h3>📥 STOCK IN (បញ្ចូលស្តុក)</h3>
-        <label>📅 ថ្ងៃខែ</label><input type="date" id="inDate">
-        <label>🏢 ដេប៉ូ</label><select id="inDepot"></select>
-        <label>🗺️ BOQ/តំបន់</label><select id="inZone"></select>
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+    <div class="nav-item active" data-page="in">
+        <span class="nav-icon">📥</span>
+        <span class="nav-label">STOCK IN</span>
     </div>
-    <div class="card">
-        <h3>📦 បញ្ជីទំនិញ</h3>
-        <input type="text" id="inSearch" placeholder="វាយឈ្មោះទំនិញ..." onkeyup="doSearch('in')">
-        <div id="inRes" class="res-box"></div>
-        <input type="number" id="inQty" placeholder="ចំនួន (Qty)" style="margin-top:10px;">
-        <button onclick="addItem('in')">+ បន្ថែមក្នុងបញ្ជី</button>
-        <div id="inCart"></div>
+    <div class="nav-item" data-page="out">
+        <span class="nav-icon">📤</span>
+        <span class="nav-label">STOCK OUT</span>
     </div>
-    <div class="card">
-        <h3>📷 ភស្តុតាង</h3>
-        <input type="file" id="inPhoto" accept="image/*" multiple onchange="previewFiles('in')">
-        <div id="inPreview" class="photo-preview"></div>
-        <button id="btn-save-in" onclick="saveData('saveStockIn')">💾 រក្សាទុក STOCK IN</button>
+    <div class="nav-item" data-page="ai">
+        <span class="nav-icon">🤖</span>
+        <span class="nav-label">ASK AI</span>
+    </div>
+    <div class="nav-item" data-page="boq">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">CHECK BOQ</span>
     </div>
 </div>
 
+<!-- ==================== PAGE: STOCK IN ==================== -->
+<div id="page-in" class="page active">
+    <div class="card">
+        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
+        <label>📅 ថ្ងៃខែ</label>
+        <input type="date" id="in-date">
+        <label>🏢 ដេប៉ូ</label>
+        <select id="in-depot"></select>
+        <label>🗺️ BOQ/តំបន់</label>
+        <select id="in-zone"></select>
+    </div>
+    <div class="card">
+        <h3>📦 បញ្ចូលទំនិញ</h3>
+        <input type="text" id="in-search" placeholder="ស្វែងរកទំនិញ..." autocomplete="off">
+        <div id="in-results" class="res-box"></div>
+        <input type="number" id="in-qty" placeholder="ចំនួន (Qty)" min="1">
+        <button class="btn-add" id="in-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
+        <div id="in-cart"></div>
+    </div>
+    <div class="card">
+        <h3>📷 រូបភាពភស្តុតាង</h3>
+        <input type="file" id="in-photo" accept="image/*" multiple>
+        <div id="in-preview" class="photo-preview"></div>
+        <div id="in-loading" class="loading">⏳ កំពុងរក្សាទុក...</div>
+        <button id="in-submit">💾 រក្សាទុក STOCK IN</button>
+    </div>
+</div>
+
+<!-- ==================== PAGE: STOCK OUT ==================== -->
 <div id="page-out" class="page">
     <div class="card">
-        <h3>📤 STOCK OUT (ដកស្តុក)</h3>
-        <label>📅 ថ្ងៃខែ</label><input type="date" id="outDate">
-        <label>🏢 ដេប៉ូ</label><select id="outDepot"></select>
-        <label>🗺️ BOQ/តំបន់</label><select id="outZone"></select>
+        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
+        <label>📅 ថ្ងៃខែ</label>
+        <input type="date" id="out-date">
+        <label>🏢 ដេប៉ូ</label>
+        <select id="out-depot"></select>
+        <label>🗺️ BOQ/តំបន់</label>
+        <select id="out-zone"></select>
     </div>
     <div class="card">
-        <h3>📦 បញ្ជីទំនិញចេញ</h3>
-        <input type="text" id="outSearch" placeholder="វាយឈ្មោះទំនិញ..." onkeyup="doSearch('out')">
-        <div id="outRes" class="res-box"></div>
-        <input type="number" id="outQty" placeholder="ចំនួន (Qty)" style="margin-top:10px;">
-        <button class="btn-out" onclick="addItem('out')">+ បន្ថែមក្នុងបញ្ជី</button>
-        <div id="outCart"></div>
+        <h3>📦 ដកទំនិញ</h3>
+        <input type="text" id="out-search" placeholder="ស្វែងរកទំនិញ..." autocomplete="off">
+        <div id="out-results" class="res-box"></div>
+        <input type="number" id="out-qty" placeholder="ចំនួន (Qty)" min="1">
+        <button class="btn-add" id="out-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
+        <div id="out-cart"></div>
     </div>
     <div class="card">
-        <h3>📷 ភស្តុតាង</h3>
-        <input type="file" id="outPhoto" accept="image/*" multiple onchange="previewFiles('out')">
-        <div id="outPreview" class="photo-preview"></div>
-        <button class="btn-out" id="btn-save-out" onclick="saveData('saveStockOut')">💾 រក្សាទុក STOCK OUT</button>
+        <h3>📷 រូបភាពភស្តុតាង</h3>
+        <input type="file" id="out-photo" accept="image/*" multiple>
+        <div id="out-preview" class="photo-preview"></div>
+        <div id="out-loading" class="loading">⏳ កំពុងរក្សាទុក...</div>
+        <button id="out-submit" class="btn-out">💾 រក្សាទុក STOCK OUT</button>
     </div>
 </div>
 
+<!-- ==================== PAGE: ASK AI ==================== -->
 <div id="page-ai" class="page">
     <div class="card">
-        <h3>🤖 ASK AI</h3>
-        <textarea id="aiMsg" rows="4" placeholder="សួរអ្វីមួយទៅកាន់ AI..."></textarea>
-        <button class="btn-ai" onclick="tg.showAlert('មុខងារនេះនឹងមកដល់ឆាប់ៗ!')">✨ ផ្ញើសំណួរ</button>
+        <h3>🤖 សួរ AI (Gemini)</h3>
+        <textarea id="ai-question" placeholder="ឧទាហរណ៍៖ តើត្រូវការដែកប៉ុន្មានសម្រាប់ផ្ទះ ១០០ម៉ែត្រការ៉េ?"></textarea>
+        <button id="ai-submit" class="btn-ai">✨ សួរ AI</button>
+        <div id="ai-response" class="ai-response" style="display:none;"></div>
+        <div id="ai-loading" class="loading">🤔 AI កំពុងគិត...</div>
+    </div>
+</div>
+
+<!-- ==================== PAGE: CHECK BOQ ==================== -->
+<div id="page-boq" class="page">
+    <div class="card">
+        <h3>📊 ពិនិត្យ BOQ</h3>
+        <label>🏗️ ប្រភេទគម្រោង</label>
+        <select id="boq-type">
+            <option value="house_100">ផ្ទះ ១០០ម៉ែត្រការ៉េ</option>
+            <option value="house_150">ផ្ទះ ១៥០ម៉ែត្រការ៉េ</option>
+            <option value="office">ការិយាល័យ</option>
+            <option value="custom">កំណត់ដោយខ្លួនឯង</option>
+        </select>
+        <div id="custom-boq" style="display:none;">
+            <label>បញ្ចូលបញ្ជីទំនិញ (JSON)</label>
+            <textarea id="custom-items" placeholder='[{"name":"ដែក","required":100},{"name":"ស៊ីម៉ង់ត៍","required":50}]'></textarea>
+        </div>
+        <button id="boq-submit">🔍 ពិនិត្យ BOQ</button>
+        <div id="boq-result" class="boq-result" style="display:none;"></div>
+        <div id="boq-loading" class="loading">⏳ កំពុងពិនិត្យ...</div>
     </div>
 </div>
 
 <script>
+    // ========== 🔧 KONYA SETTINGS - CHANGE THIS URL 🔧 ==========
+    // Get your Apps Script Web App URL and paste it here.
+    // It should look like: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPiWpZnGHJDYo-Ci67ti87v1izx0ykH0DXZ0vLcKNEtoT68enbfYrchKjx0yI4dMKw/exec';
+    // ============================================================
+
+    // Initialize Telegram Web App
     const tg = window.Telegram.WebApp;
     tg.expand();
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzljgyWoxDQIY8f5BXAmXdq9RwotsK_ZyK5f0BGVTKQ-C4JwMPu5KqcBBqWzXJ8alt1/exec";
+    tg.MainButton.hide();
 
-    let db = { items: [], allowedTabs: [] };
+    // Global state
+    let appData = {
+        items: [],         // Product list from Items_List
+        depots: [],        // Unique depots from Data base
+        zones: [],         // Unique zones from Data base
+        depotZoneMap: {}   // Mapping depot -> list of zones
+    };
     let carts = { in: [], out: [] };
-    let selectedItem = { in: null, out: null };
-    let photoFiles = { in: [], out: [] };
+    let selectedItems = { in: null, out: null };
+    let selectedFiles = { in: [], out: [] };
+    let currentUser = { id: null, name: 'Guest', permissions: [] };
 
-    async function init() {
-        const userId = tg.initDataUnsafe?.user?.id || "12345"; // សាកល្បងជាមួយ ID បង
+    // Helper: Show Telegram alert
+    function showAlert(msg) { tg.showAlert(msg); }
+
+    // Helper: Format date as YYYY-MM-DD
+    function formatDate(date) { return date.toISOString().split('T')[0]; }
+
+    // ==================== 1. FETCH DATA FROM APPS SCRIPT ====================
+    async function fetchAppData() {
         try {
-            const res = await fetch(`${SCRIPT_URL}?userId=${userId}`);
-            const data = await res.json();
-            
-            if (data.error) {
-                document.body.innerHTML = `<div style="padding:50px;text-align:center;color:red;"><h3>🚫 គ្មានសិទ្ធិ</h3><p>${data.error}</p></div>`;
-                return;
+            // Get user ID from Telegram
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                currentUser.id = tg.initDataUnsafe.user.id;
+                currentUser.name = tg.initDataUnsafe.user.first_name || 'User';
             }
-
-            db = data;
-            renderNav(data.allowedTabs);
-            populate('inDepot', db.depots);
-            populate('outDepot', db.depots);
-            populate('inZone', db.boqList);
-            populate('outZone', db.boqList);
+            // Build URL with userId parameter
+            const url = `${SCRIPT_URL}?userId=${currentUser.id || ''}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
             
-            document.getElementById('inDate').valueAsDate = new Date();
-            document.getElementById('outDate').valueAsDate = new Date();
-            document.getElementById('loading-screen').style.display = 'none';
-        } catch (e) {
-            alert("Connection Error!");
+            // Parse received data
+            appData.items = data.items || [];
+            appData.depots = data.depots || [];
+            appData.zones = data.zones || [];
+            appData.depotZoneMap = data.depotZoneMap || {};
+            
+            // Update user permissions if provided
+            if (data.allowedTabs) currentUser.permissions = data.allowedTabs;
+            if (data.userName) currentUser.name = data.userName;
+            
+            // Populate dropdowns
+            populateDepotDropdown('in-depot', appData.depots);
+            populateDepotDropdown('out-depot', appData.depots);
+            
+            // Set default dates
+            document.getElementById('in-date').value = formatDate(new Date());
+            document.getElementById('out-date').value = formatDate(new Date());
+            
+            // Setup zone dropdown listeners
+            setupZoneListener('in');
+            setupZoneListener('out');
+            
+            showAlert(`ស្វាគមន៍ ${currentUser.name}!`);
+        } catch (error) {
+            console.error('Fetch error:', error);
+            showAlert('មិនអាចទាញទិន្នន័យបានទេ។ សូមពិនិត្យ URL ។');
         }
     }
 
-    function renderNav(tabs) {
-        const nav = document.getElementById('main-nav');
-        nav.style.display = 'flex';
-        const icons = { in: '📥 IN', out: '📤 OUT', ai: '🤖 AI', boq: '📊 BOQ' };
-        tabs.forEach((t, i) => {
-            const d = document.createElement('div');
-            d.className = `nav-item ${i === 0 ? 'active' : ''}`;
-            d.id = `nav-${t}`;
-            d.innerHTML = icons[t] || t.toUpperCase();
-            d.onclick = () => switchPage(t);
-            nav.appendChild(d);
+    function populateDepotDropdown(selectId, depots) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option value="">ជ្រើសរើសដេប៉ូ...</option>';
+        depots.forEach(depot => {
+            const option = document.createElement('option');
+            option.value = depot;
+            option.textContent = depot;
+            select.appendChild(option);
         });
-        switchPage(tabs[0]);
     }
 
-    function switchPage(p) {
-        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(nv => nv.classList.remove('active'));
-        document.getElementById(`page-${p}`).classList.add('active');
-        document.getElementById(`nav-${p}`).classList.add('active');
+    function setupZoneListener(type) {
+        const depotSelect = document.getElementById(`${type}-depot`);
+        depotSelect.addEventListener('change', () => updateZoneDropdown(type));
+        updateZoneDropdown(type);
     }
 
-    function populate(id, arr) {
-        const s = document.getElementById(id);
-        s.innerHTML = '<option value="">ជ្រើសរើស...</option>';
-        arr.forEach(v => s.add(new Option(v, v)));
-    }
-
-    function doSearch(type) {
-        const kw = document.getElementById(`${type}Search`).value.toLowerCase();
-        const box = document.getElementById(`${type}Res`);
-        if (kw.length < 2) { box.style.display = 'none'; return; }
-        box.innerHTML = '';
-        const matches = db.items.filter(i => i.name.toLowerCase().includes(kw) || i.code.toLowerCase().includes(kw));
-        matches.slice(0, 10).forEach(i => {
-            const d = document.createElement('div');
-            d.className = 'item-row';
-            d.innerText = `${i.name} (${i.code})`;
-            d.onclick = () => {
-                selectedItem[type] = i;
-                document.getElementById(`${type}Search`).value = i.name;
-                box.style.display = 'none';
-            };
-            box.appendChild(d);
+    function updateZoneDropdown(type) {
+        const depot = document.getElementById(`${type}-depot`).value;
+        const zoneSelect = document.getElementById(`${type}-zone`);
+        let zones = [];
+        if (depot && appData.depotZoneMap[depot]) {
+            zones = appData.depotZoneMap[depot];
+        } else {
+            zones = appData.zones;
+        }
+        zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
+        zones.forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone;
+            option.textContent = zone;
+            zoneSelect.appendChild(option);
         });
-        box.style.display = matches.length > 0 ? 'block' : 'none';
     }
 
-    function addItem(type) {
-        const qty = document.getElementById(`${type}Qty`).value;
-        const item = selectedItem[type];
-        if (!item || !qty) return tg.showAlert("សូមបញ្ចូលទិន្នន័យឱ្យគ្រប់!");
-        carts[type].push({ ...item, qty });
-        renderCart(type);
-        document.getElementById(`${type}Search`).value = '';
-        document.getElementById(`${type}Qty`).value = '';
-        selectedItem[type] = null;
+    // ==================== 2. SEARCH PRODUCTS ====================
+    function setupSearch(type) {
+        const searchInput = document.getElementById(`${type}-search`);
+        const resultsDiv = document.getElementById(`${type}-results`);
+        
+        searchInput.addEventListener('input', () => {
+            const keyword = searchInput.value.toLowerCase().trim();
+            if (keyword.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+            const matched = appData.items.filter(item => 
+                item.name.toLowerCase().includes(keyword) || 
+                (item.code && item.code.toLowerCase().includes(keyword))
+            );
+            resultsDiv.innerHTML = '';
+            matched.slice(0, 8).forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item-row';
+                div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit ? `[${item.unit}]` : ''}`;
+                div.onclick = () => {
+                    selectedItems[type] = item;
+                    searchInput.value = item.name;
+                    resultsDiv.style.display = 'none';
+                };
+                resultsDiv.appendChild(div);
+            });
+            resultsDiv.style.display = matched.length ? 'block' : 'none';
+        });
+        
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.style.display = 'none';
+            }
+        });
+    }
+
+    // ==================== 3. CART MANAGEMENT ====================
+    function setupAddButton(type) {
+        document.getElementById(`${type}-add-btn`).addEventListener('click', () => {
+            const qtyInput = document.getElementById(`${type}-qty`);
+            const qty = parseInt(qtyInput.value);
+            const selected = selectedItems[type];
+            if (!selected) return showAlert('សូមជ្រើសរើសទំនិញ!');
+            if (!qty || qty <= 0) return showAlert('សូមបញ្ចូលចំនួនត្រឹមត្រូវ!');
+            
+            const existing = carts[type].find(i => i.code === selected.code);
+            if (existing) existing.qty += qty;
+            else carts[type].push({ ...selected, qty: qty });
+            
+            renderCart(type);
+            qtyInput.value = '';
+            selectedItems[type] = null;
+            document.getElementById(`${type}-search`).value = '';
+            showAlert(`បានបន្ថែម ${selected.name} ចំនួន ${qty}`);
+        });
     }
 
     function renderCart(type) {
-        const div = document.getElementById(`${type}Cart`);
-        div.innerHTML = carts[type].map((item, idx) => `
+        const container = document.getElementById(`${type}-cart`);
+        if (carts[type].length === 0) {
+            container.innerHTML = '<div class="empty-cart">📭 មិនទាន់មានទំនិញក្នុងបញ្ជី</div>';
+            return;
+        }
+        container.innerHTML = carts[type].map((item, idx) => `
             <div class="cart-item">
-                <span><b>${item.name}</b> (${item.qty})</span>
-                <button class="remove-item" onclick="carts['${type}'].splice(${idx},1);renderCart('${type}')">✕</button>
+                <span><strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''}</span>
+                <div>
+                    <span class="cart-qty">${item.qty} ${item.unit || ''}</span>
+                    <button class="remove-item" data-type="${type}" data-index="${idx}">✕</button>
+                </div>
             </div>
         `).join('');
-    }
-
-    function previewFiles(type) {
-        const files = document.getElementById(`${type}Photo`).files;
-        const pre = document.getElementById(`${type}Preview`);
-        pre.innerHTML = '';
-        photoFiles[type] = Array.from(files);
-        photoFiles[type].forEach(f => {
-            const rd = new FileReader();
-            rd.onload = e => {
-                const img = document.createElement('img');
-                img.src = e.target.result; img.className = 'preview-img';
-                pre.appendChild(img);
-            };
-            rd.readAsDataURL(f);
+        
+        // Attach remove event listeners
+        document.querySelectorAll(`#${type}-cart .remove-item`).forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.index);
+                carts[type].splice(idx, 1);
+                renderCart(type);
+            });
         });
     }
 
-    async function saveData(action) {
-        const type = action === 'saveStockOut' ? 'out' : 'in';
-        if (carts[type].length === 0) return tg.showAlert("បញ្ជីទទេ!");
-        
-        const btn = document.getElementById(`btn-save-${type}`);
-        btn.disabled = true; btn.innerText = "⏳ កំពុងរក្សាទុក...";
+    // ==================== 4. IMAGE PREVIEW ====================
+    function setupImagePreview(type) {
+        const input = document.getElementById(`${type}-photo`);
+        const preview = document.getElementById(`${type}-preview`);
+        input.addEventListener('change', () => {
+            preview.innerHTML = '';
+            selectedFiles[type] = Array.from(input.files);
+            selectedFiles[type].forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-img';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+    }
 
-        const imgs = await Promise.all(photoFiles[type].map(f => new Promise((res) => {
-            const rd = new FileReader(); rd.onload = () => res(rd.result.split(',')[1]); rd.readAsDataURL(f);
+    function filesToBase64(files) {
+        return Promise.all(files.map(file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
         })));
+    }
 
-        const payload = {
-            action,
-            date: document.getElementById(`${type}Date`).value,
-            depot: document.getElementById(`${type}Depot`).value,
-            zone: document.getElementById(`${type}Zone`).value,
-            items: carts[type],
-            images: imgs,
-            user: db.userName
-        };
-
+    // ==================== 5. SUBMIT STOCK (IN/OUT) ====================
+    async function submitStock(type) {
+        const cart = carts[type];
+        if (cart.length === 0) return showAlert('សូមបន្ថែមទំនិញក្នុងបញ្ជី!');
+        
+        const date = document.getElementById(`${type}-date`).value;
+        const depot = document.getElementById(`${type}-depot`).value;
+        const zone = document.getElementById(`${type}-zone`).value;
+        if (!depot || !zone) return showAlert('សូមជ្រើសរើសដេប៉ូ និង BOQ!');
+        
+        const loadingDiv = document.getElementById(`${type}-loading`);
+        const submitBtn = document.getElementById(`${type}-submit`);
+        loadingDiv.style.display = 'block';
+        submitBtn.disabled = true;
+        
         try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await res.json();
+            let images = [];
+            if (selectedFiles[type].length) images = await filesToBase64(selectedFiles[type]);
+            const payload = {
+                action: type === 'in' ? 'saveStockIn' : 'saveStockOut',
+                date: date,
+                depot: depot,
+                zone: zone,
+                items: cart.map(item => ({ code: item.code, name: item.name, qty: item.qty, unit: item.unit })),
+                images: images,
+                user: currentUser.name
+            };
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
             if (result.status === 'success') {
-                tg.showAlert("✅ រក្សាទុកជោគជ័យ!");
-                location.reload();
+                showAlert(`✅ ${type === 'in' ? 'បញ្ចូល' : 'ដក'}ស្តុកបានជោគជ័យ!`);
+                carts[type] = [];
+                renderCart(type);
+                selectedFiles[type] = [];
+                document.getElementById(`${type}-preview`).innerHTML = '';
+                document.getElementById(`${type}-photo`).value = '';
+            } else {
+                showAlert('បរាជ័យ: ' + (result.message || 'Unknown error'));
             }
-        } catch (e) {
-            alert("Error saving data!");
-            btn.disabled = false; btn.innerText = "💾 រក្សាទុកម្តងទៀត";
+        } catch (error) {
+            console.error('Submit error:', error);
+            showAlert('កំហុស: ' + error.message);
+        } finally {
+            loadingDiv.style.display = 'none';
+            submitBtn.disabled = false;
         }
     }
 
+    // ==================== 6. ASK GEMINI AI ====================
+    async function askGemini() {
+        const question = document.getElementById('ai-question').value.trim();
+        if (!question) return showAlert('សូមបញ្ចូលសំណួរ!');
+        
+        const loadingDiv = document.getElementById('ai-loading');
+        const responseDiv = document.getElementById('ai-response');
+        const submitBtn = document.getElementById('ai-submit');
+        loadingDiv.style.display = 'block';
+        responseDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        
+        try {
+            const payload = { action: 'askGemini', question: question };
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            responseDiv.innerHTML = result.answer || 'មិនមានចម្លើយ។';
+            responseDiv.style.display = 'block';
+        } catch (error) {
+            responseDiv.innerHTML = 'កំហុស: ' + error.message;
+            responseDiv.style.display = 'block';
+        } finally {
+            loadingDiv.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+    }
+
+    // ==================== 7. CHECK BOQ ====================
+    async function checkBOQ() {
+        const boqType = document.getElementById('boq-type').value;
+        let customItems = null;
+        if (boqType === 'custom') {
+            customItems = document.getElementById('custom-items').value;
+            if (!customItems) return showAlert('សូមបញ្ចូល JSON ទំនិញ!');
+        }
+        const loadingDiv = document.getElementById('boq-loading');
+        const resultDiv = document.getElementById('boq-result');
+        const submitBtn = document.getElementById('boq-submit');
+        loadingDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        
+        try {
+            const payload = { action: 'checkBOQ', boqType: boqType, customItems: customItems };
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            let html = '<strong>📋 លទ្ធផលពិនិត្យ BOQ</strong><br><br>';
+            if (data.boq && data.boq.length > 0) {
+                html += '<table style="width:100%; border-collapse:collapse;">';
+                html += '<tr style="background:#2b7a3e; color:white;"><th style="padding:8px;">ទំនិញ</th><th>ត្រូវការ</th><th>ស្តុកមាន</th><th>ស្ថានភាព</th></tr>';
+                data.boq.forEach(item => {
+                    const status = item.currentStock >= item.required ? '✅ គ្រប់គ្រាន់' : '⚠️ ខ្វះ';
+                    const statusColor = item.currentStock >= item.required ? '#2b7a3e' : '#c0392b';
+                    html += `<tr style="border-bottom:1px solid #ddd;">
+                        <td style="padding:8px;">${item.name}</td>
+                        <td style="padding:8px;">${item.required} ${item.unit || ''}</td>
+                        <td style="padding:8px;">${item.currentStock || 0} ${item.unit || ''}</td>
+                        <td style="padding:8px; color:${statusColor};">${status}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+            } else {
+                html += '<p>មិនមានទិន្នន័យ BOQ</p>';
+            }
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        } catch (error) {
+            resultDiv.innerHTML = 'កំហុស: ' + error.message;
+            resultDiv.style.display = 'block';
+        } finally {
+            loadingDiv.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+    }
+
+    // ==================== 8. PAGE NAVIGATION ====================
+    function initNavigation() {
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const pageId = item.dataset.page;
+                if (!pageId) return;
+                // Check permission if needed
+                if (currentUser.permissions.length && !currentUser.permissions.includes(pageId)) {
+                    return showAlert('អ្នកគ្មានសិទ្ធិប្រើមុខងារនេះទេ!');
+                }
+                pages.forEach(page => page.classList.remove('active'));
+                document.getElementById(`page-${pageId}`).classList.add('active');
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    }
+
+    // ==================== INITIALIZE APP ====================
+    async function init() {
+        await fetchAppData();
+        setupSearch('in');
+        setupSearch('out');
+        setupAddButton('in');
+        setupAddButton('out');
+        setupImagePreview('in');
+        setupImagePreview('out');
+        renderCart('in');
+        renderCart('out');
+        initNavigation();
+        
+        // Submit buttons
+        document.getElementById('in-submit').addEventListener('click', () => submitStock('in'));
+        document.getElementById('out-submit').addEventListener('click', () => submitStock('out'));
+        document.getElementById('ai-submit').addEventListener('click', askGemini);
+        document.getElementById('boq-submit').addEventListener('click', checkBOQ);
+        
+        // BOQ custom type toggle
+        document.getElementById('boq-type').addEventListener('change', function() {
+            const customDiv = document.getElementById('custom-boq');
+            customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+    }
+    
     init();
 </script>
-<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 </body>
 </html>
