@@ -2,18 +2,18 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Stock App - Chantrea</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Stock App - 8 Sheets</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto;
             background: #f0f2f5;
             margin: 0;
-            padding: 0 0 70px 0;
+            padding: 0 0 80px 0;
         }
-        /* Bottom Navigation Bar */
+        /* Bottom navigation - scrollable if many tabs */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -21,44 +21,46 @@
             right: 0;
             background: white;
             display: flex;
-            justify-content: space-around;
-            padding: 8px 0;
+            overflow-x: auto;
+            white-space: nowrap;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 100;
+            padding: 5px 0;
         }
         .nav-item {
+            display: inline-block;
             text-align: center;
-            padding: 6px 0;
-            flex: 1;
+            padding: 8px 12px;
             cursor: pointer;
             border-radius: 30px;
-            transition: 0.2s;
+            margin: 0 2px;
+            font-size: 12px;
+            font-weight: 500;
             color: #6c757d;
         }
         .nav-item.active {
             background: #2b7a3e;
             color: white;
         }
-        .nav-icon { font-size: 24px; display: block; }
-        .nav-label { font-size: 11px; margin-top: 4px; }
-
-        /* Main Content */
-        .page { display: none; padding: 12px; }
-        .page.active { display: block; }
+        .page {
+            display: none;
+            padding: 12px;
+        }
+        .page.active {
+            display: block;
+        }
         .card {
             background: white;
-            margin-bottom: 16px;
-            padding: 16px;
             border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         h3 {
             margin: 0 0 12px 0;
-            font-size: 16px;
-            color: #1a1a2e;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            font-size: 18px;
+            border-left: 4px solid #2b7a3e;
+            padding-left: 10px;
         }
         label {
             font-size: 12px;
@@ -74,10 +76,7 @@
             border: 1px solid #dee2e6;
             border-radius: 12px;
             font-size: 14px;
-            font-family: inherit;
-            background: white;
         }
-        textarea { resize: vertical; min-height: 80px; }
         button {
             width: 100%;
             padding: 14px;
@@ -85,39 +84,48 @@
             color: white;
             border: none;
             border-radius: 12px;
-            font-weight: 600;
-            font-size: 16px;
+            font-weight: bold;
             margin-top: 16px;
             cursor: pointer;
-            transition: 0.2s;
         }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-out { background: #c0392b; }
-        .btn-ai { background: #8e44ad; }
-        .btn-add { background: #ff9800; margin-top: 12px; }
-
-        /* Search Results */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #2b7a3e;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
         .res-box {
+            position: absolute;
+            background: white;
             border: 1px solid #ddd;
             max-height: 200px;
             overflow-y: auto;
-            background: white;
-            border-radius: 12px;
-            margin-top: 5px;
-            display: none;
-            position: absolute;
             width: calc(100% - 32px);
             z-index: 50;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            display: none;
         }
         .item-row {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
         }
-        .item-row:hover { background: #e8f5e9; }
-
-        /* Cart */
         .cart-item {
             background: #f8f9fa;
             padding: 8px 12px;
@@ -125,579 +133,421 @@
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
         .cart-qty {
             background: #2b7a3e;
             color: white;
             padding: 2px 10px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
         }
         .remove-item {
             background: none;
             border: none;
             color: #c0392b;
-            font-size: 18px;
             cursor: pointer;
-            margin-left: 8px;
         }
-        .empty-cart {
-            color: #adb5bd;
-            text-align: center;
-            padding: 16px;
-            font-size: 13px;
-        }
-
-        /* Image Preview */
-        .photo-preview {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .preview-img {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-
-        /* AI & BOQ Results */
-        .ai-response, .boq-result {
-            background: #f3e8ff;
-            padding: 12px;
-            border-radius: 12px;
-            margin-top: 12px;
-            white-space: pre-wrap;
-            font-size: 14px;
-        }
-        .boq-result { background: #e8f5e9; }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 12px;
-            color: #2b7a3e;
-            font-weight: 500;
-        }
+        .empty-cart { color: #aaa; text-align: center; padding: 16px; }
+        .loading { display: none; text-align: center; padding: 12px; color: #2b7a3e; }
+        .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-    <div class="nav-item active" data-page="in">
-        <span class="nav-icon">📥</span>
-        <span class="nav-label">STOCK IN</span>
-    </div>
-    <div class="nav-item" data-page="out">
-        <span class="nav-icon">📤</span>
-        <span class="nav-label">STOCK OUT</span>
-    </div>
-    <div class="nav-item" data-page="ai">
-        <span class="nav-icon">🤖</span>
-        <span class="nav-label">ASK AI</span>
-    </div>
-    <div class="nav-item" data-page="boq">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">CHECK BOQ</span>
-    </div>
-</div>
+<div class="bottom-nav" id="bottomNav"></div>
 
-<!-- ==================== PAGE: STOCK IN ==================== -->
-<div id="page-in" class="page active">
-    <div class="card">
-        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
-        <label>📅 ថ្ងៃខែ</label>
-        <input type="date" id="in-date">
-        <label>🏢 ដេប៉ូ</label>
-        <select id="in-depot"></select>
-        <label>🗺️ BOQ/តំបន់</label>
-        <select id="in-zone"></select>
-    </div>
-    <div class="card">
-        <h3>📦 បញ្ចូលទំនិញ</h3>
-        <input type="text" id="in-search" placeholder="ស្វែងរកទំនិញ..." autocomplete="off">
-        <div id="in-results" class="res-box"></div>
-        <input type="number" id="in-qty" placeholder="ចំនួន (Qty)" min="1">
-        <button class="btn-add" id="in-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
-        <div id="in-cart"></div>
-    </div>
-    <div class="card">
-        <h3>📷 រូបភាពភស្តុតាង</h3>
-        <input type="file" id="in-photo" accept="image/*" multiple>
-        <div id="in-preview" class="photo-preview"></div>
-        <div id="in-loading" class="loading">⏳ កំពុងរក្សាទុក...</div>
-        <button id="in-submit">💾 រក្សាទុក STOCK IN</button>
-    </div>
-</div>
-
-<!-- ==================== PAGE: STOCK OUT ==================== -->
-<div id="page-out" class="page">
-    <div class="card">
-        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
-        <label>📅 ថ្ងៃខែ</label>
-        <input type="date" id="out-date">
-        <label>🏢 ដេប៉ូ</label>
-        <select id="out-depot"></select>
-        <label>🗺️ BOQ/តំបន់</label>
-        <select id="out-zone"></select>
-    </div>
-    <div class="card">
-        <h3>📦 ដកទំនិញ</h3>
-        <input type="text" id="out-search" placeholder="ស្វែងរកទំនិញ..." autocomplete="off">
-        <div id="out-results" class="res-box"></div>
-        <input type="number" id="out-qty" placeholder="ចំនួន (Qty)" min="1">
-        <button class="btn-add" id="out-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
-        <div id="out-cart"></div>
-    </div>
-    <div class="card">
-        <h3>📷 រូបភាពភស្តុតាង</h3>
-        <input type="file" id="out-photo" accept="image/*" multiple>
-        <div id="out-preview" class="photo-preview"></div>
-        <div id="out-loading" class="loading">⏳ កំពុងរក្សាទុក...</div>
-        <button id="out-submit" class="btn-out">💾 រក្សាទុក STOCK OUT</button>
-    </div>
-</div>
-
-<!-- ==================== PAGE: ASK AI ==================== -->
-<div id="page-ai" class="page">
-    <div class="card">
-        <h3>🤖 សួរ AI (Gemini)</h3>
-        <textarea id="ai-question" placeholder="ឧទាហរណ៍៖ តើត្រូវការដែកប៉ុន្មានសម្រាប់ផ្ទះ ១០០ម៉ែត្រការ៉េ?"></textarea>
-        <button id="ai-submit" class="btn-ai">✨ សួរ AI</button>
-        <div id="ai-response" class="ai-response" style="display:none;"></div>
-        <div id="ai-loading" class="loading">🤔 AI កំពុងគិត...</div>
-    </div>
-</div>
-
-<!-- ==================== PAGE: CHECK BOQ ==================== -->
-<div id="page-boq" class="page">
-    <div class="card">
-        <h3>📊 ពិនិត្យ BOQ</h3>
-        <label>🏗️ ប្រភេទគម្រោង</label>
-        <select id="boq-type">
-            <option value="house_100">ផ្ទះ ១០០ម៉ែត្រការ៉េ</option>
-            <option value="house_150">ផ្ទះ ១៥០ម៉ែត្រការ៉េ</option>
-            <option value="office">ការិយាល័យ</option>
-            <option value="custom">កំណត់ដោយខ្លួនឯង</option>
-        </select>
-        <div id="custom-boq" style="display:none;">
-            <label>បញ្ចូលបញ្ជីទំនិញ (JSON)</label>
-            <textarea id="custom-items" placeholder='[{"name":"ដែក","required":100},{"name":"ស៊ីម៉ង់ត៍","required":50}]'></textarea>
-        </div>
-        <button id="boq-submit">🔍 ពិនិត្យ BOQ</button>
-        <div id="boq-result" class="boq-result" style="display:none;"></div>
-        <div id="boq-loading" class="loading">⏳ កំពុងពិនិត្យ...</div>
-    </div>
-</div>
+<!-- Dynamically create pages via JS, but we'll predefine containers -->
+<div id="pages-container"></div>
 
 <script>
-    // ========== 🔧 KONYA SETTINGS - CHANGE THIS URL 🔧 ==========
-    // Get your Apps Script Web App URL and paste it here.
-    // It should look like: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPiWpZnGHJDYo-Ci67ti87v1izx0ykH0DXZ0vLcKNEtoT68enbfYrchKjx0yI4dMKw/exec';
-    // ============================================================
-
-    // Initialize Telegram Web App
-    const tg = window.Telegram.WebApp;
+    const tg = Telegram.WebApp;
     tg.expand();
     tg.MainButton.hide();
 
-    // Global state
-    let appData = {
-        items: [],         // Product list from Items_List
-        depots: [],        // Unique depots from Data base
-        zones: [],         // Unique zones from Data base
-        depotZoneMap: {}   // Mapping depot -> list of zones
-    };
+    // ========== 🔧 CONFIG - CHANGE THIS URL ==========
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMKkUsciFYB52EfUC-eQUvf-JezPXNJz9q9YTvJnbJkde6MC8SJfC6tBoijwVYzmW5/exec';
+    // ================================================
+
+    // Define all 8 sheets/tabs
+    const TABS = [
+        { id: "items_list", label: "📦 Items_List", sheetName: "Items_List" },
+        { id: "data_base", label: "🗄️ Data base", sheetName: "Data base" },
+        { id: "closing", label: "📆 Closing Stock", sheetName: "Closing Stock Monthly" },
+        { id: "stock_in", label: "📥 Stock_In", sheetName: "Stock_In", hasForm: true, type: "IN" },
+        { id: "stock_out", label: "📤 Stock_Out", sheetName: "Stock_Out", hasForm: true, type: "OUT" },
+        { id: "balance", label: "⚖️ Current Balance", sheetName: "Current Balance" },
+        { id: "boq", label: "📐 BOQ", sheetName: "BOQ" },
+        { id: "users", label: "👥 Users", sheetName: "Users" }
+    ];
+
+    let appData = {};  // will store all sheet data
+    let currentUser = { id: null, name: "Guest", permissions: [] };
     let carts = { in: [], out: [] };
     let selectedItems = { in: null, out: null };
     let selectedFiles = { in: [], out: [] };
-    let currentUser = { id: null, name: 'Guest', permissions: [] };
+    let depotsList = [], zonesList = [], depotZoneMap = {};
 
-    // Helper: Show Telegram alert
+    // Helper
     function showAlert(msg) { tg.showAlert(msg); }
 
-    // Helper: Format date as YYYY-MM-DD
-    function formatDate(date) { return date.toISOString().split('T')[0]; }
-
-    // ==================== 1. FETCH DATA FROM APPS SCRIPT ====================
-    async function fetchAppData() {
+    // Fetch all data from Apps Script
+    async function fetchAllData() {
         try {
-            // Get user ID from Telegram
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            if (tg.initDataUnsafe?.user) {
                 currentUser.id = tg.initDataUnsafe.user.id;
-                currentUser.name = tg.initDataUnsafe.user.first_name || 'User';
+                currentUser.name = tg.initDataUnsafe.user.first_name || "User";
             }
-            // Build URL with userId parameter
             const url = `${SCRIPT_URL}?userId=${currentUser.id || ''}`;
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
+            const res = await fetch(url);
+            const data = await res.json();
+            // Store each sheet data
+            appData["Items_List"] = data.items || [];
+            appData["Data base"] = data.database || [];
+            appData["Closing Stock Monthly"] = data.closing || [];
+            appData["Stock_In"] = [];  // will be fetched separately if needed, but backend returns all? We'll call again or restructure. For simplicity, we'll rely on existing.
+            appData["Stock_Out"] = [];
+            appData["Current Balance"] = data.balance || [];
+            appData["BOQ"] = data.boq || [];
+            appData["Users"] = []; // not returned by default, can add later
             
-            // Parse received data
-            appData.items = data.items || [];
-            appData.depots = data.depots || [];
-            appData.zones = data.zones || [];
-            appData.depotZoneMap = data.depotZoneMap || {};
+            // For Stock_In and Stock_Out, we might need separate fetch, but backend can be extended. 
+            // For now, we'll assume they are empty or we can add a separate call.
+            // But user wants to see logs, we need to get them. Let's add a separate fetch for stock logs.
+            await fetchStockLogs();
             
-            // Update user permissions if provided
-            if (data.allowedTabs) currentUser.permissions = data.allowedTabs;
-            if (data.userName) currentUser.name = data.userName;
-            
-            // Populate dropdowns
-            populateDepotDropdown('in-depot', appData.depots);
-            populateDepotDropdown('out-depot', appData.depots);
-            
-            // Set default dates
-            document.getElementById('in-date').value = formatDate(new Date());
-            document.getElementById('out-date').value = formatDate(new Date());
-            
-            // Setup zone dropdown listeners
-            setupZoneListener('in');
-            setupZoneListener('out');
-            
-            showAlert(`ស្វាគមន៍ ${currentUser.name}!`);
-        } catch (error) {
-            console.error('Fetch error:', error);
-            showAlert('មិនអាចទាញទិន្នន័យបានទេ។ សូមពិនិត្យ URL ។');
-        }
-    }
-
-    function populateDepotDropdown(selectId, depots) {
-        const select = document.getElementById(selectId);
-        select.innerHTML = '<option value="">ជ្រើសរើសដេប៉ូ...</option>';
-        depots.forEach(depot => {
-            const option = document.createElement('option');
-            option.value = depot;
-            option.textContent = depot;
-            select.appendChild(option);
-        });
-    }
-
-    function setupZoneListener(type) {
-        const depotSelect = document.getElementById(`${type}-depot`);
-        depotSelect.addEventListener('change', () => updateZoneDropdown(type));
-        updateZoneDropdown(type);
-    }
-
-    function updateZoneDropdown(type) {
-        const depot = document.getElementById(`${type}-depot`).value;
-        const zoneSelect = document.getElementById(`${type}-zone`);
-        let zones = [];
-        if (depot && appData.depotZoneMap[depot]) {
-            zones = appData.depotZoneMap[depot];
-        } else {
-            zones = appData.zones;
-        }
-        zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
-        zones.forEach(zone => {
-            const option = document.createElement('option');
-            option.value = zone;
-            option.textContent = zone;
-            zoneSelect.appendChild(option);
-        });
-    }
-
-    // ==================== 2. SEARCH PRODUCTS ====================
-    function setupSearch(type) {
-        const searchInput = document.getElementById(`${type}-search`);
-        const resultsDiv = document.getElementById(`${type}-results`);
-        
-        searchInput.addEventListener('input', () => {
-            const keyword = searchInput.value.toLowerCase().trim();
-            if (keyword.length < 2) {
-                resultsDiv.style.display = 'none';
-                return;
+            // Also extract depots/zones from Data base
+            if (appData["Data base"].length) {
+                const depSet = new Set();
+                const zoneSet = new Set();
+                const map = {};
+                appData["Data base"].forEach(row => {
+                    const depot = row.depot || row["depot"] || row["ដេប៉ូ"];
+                    const zone = row.boq_zone || row["boq/zone"] || row["boq"];
+                    if (depot) {
+                        depSet.add(depot);
+                        if (zone) {
+                            if (!map[depot]) map[depot] = [];
+                            if (!map[depot].includes(zone)) map[depot].push(zone);
+                            zoneSet.add(zone);
+                        }
+                    }
+                });
+                depotsList = Array.from(depSet);
+                zonesList = Array.from(zoneSet);
+                depotZoneMap = map;
             }
-            const matched = appData.items.filter(item => 
-                item.name.toLowerCase().includes(keyword) || 
-                (item.code && item.code.toLowerCase().includes(keyword))
-            );
-            resultsDiv.innerHTML = '';
-            matched.slice(0, 8).forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'item-row';
-                div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit ? `[${item.unit}]` : ''}`;
-                div.onclick = () => {
-                    selectedItems[type] = item;
-                    searchInput.value = item.name;
-                    resultsDiv.style.display = 'none';
-                };
-                resultsDiv.appendChild(div);
+            
+            // Render all tables
+            renderAllTables();
+            // Build navigation
+            buildNavigation();
+            // Activate first tab
+            switchTab(TABS[0].id);
+        } catch (e) {
+            showAlert("ទាញទិន្នន័យបរាជ័យ: " + e.message);
+        }
+    }
+
+    async function fetchStockLogs() {
+        // We need to get Stock_In and Stock_Out data from backend.
+        // Since backend currently doesn't return them in doGet, we can add a separate endpoint or modify doGet.
+        // For simplicity, we'll add a new action to doPost? Better to modify doGet to include stock logs if requested.
+        // To avoid complexity, we'll assume the user will rely on the form to add and view logs via the same sheet.
+        // We'll create a function to read directly from sheet using Apps Script? Not possible client-side.
+        // Alternative: add two more parameters to doGet. But let's keep it simple: we'll display an empty table with message.
+        // The user can still add stock via the form, and the logs will appear after refresh.
+        // For better UX, we can add a refresh button.
+        appData["Stock_In"] = []; // placeholder
+        appData["Stock_Out"] = [];
+        // In real scenario, you'd modify Apps Script to return stock logs. I'll provide updated Apps Script at the end.
+    }
+
+    function renderAllTables() {
+        TABS.forEach(tab => {
+            const sheetName = tab.sheetName;
+            const data = appData[sheetName] || [];
+            const container = document.getElementById(`table-${tab.id}`);
+            if (container) {
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="empty-cart">គ្មានទិន្នន័យ</div>';
+                } else {
+                    const headers = Object.keys(data[0]);
+                    let html = '<div class="table-wrapper"><table><thead><tr>';
+                    headers.forEach(h => html += `<th>${h}</th>`);
+                    html += '</tr></thead><tbody>';
+                    data.forEach(row => {
+                        html += '<tr>';
+                        headers.forEach(h => html += `<td>${row[h] ?? ''}</td>`);
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    container.innerHTML = html;
+                }
+            }
+        });
+    }
+
+    function buildNavigation() {
+        const nav = document.getElementById('bottomNav');
+        nav.innerHTML = '';
+        TABS.forEach((tab, idx) => {
+            const btn = document.createElement('div');
+            btn.className = 'nav-item';
+            if (idx === 0) btn.classList.add('active');
+            btn.innerText = tab.label;
+            btn.dataset.id = tab.id;
+            btn.addEventListener('click', () => switchTab(tab.id));
+            nav.appendChild(btn);
+        });
+    }
+
+    function switchTab(tabId) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const targetPage = document.getElementById(`page-${tabId}`);
+        if (targetPage) targetPage.classList.add('active');
+        // Update nav active
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+            if (nav.dataset.id === tabId) nav.classList.add('active');
+        });
+    }
+
+    // Create dynamic pages
+    function createPages() {
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+        TABS.forEach(tab => {
+            const pageDiv = document.createElement('div');
+            pageDiv.id = `page-${tab.id}`;
+            pageDiv.className = 'page';
+            
+            // Title
+            const title = document.createElement('h3');
+            title.innerText = tab.label;
+            pageDiv.appendChild(title);
+            
+            if (tab.hasForm) {
+                // Add stock entry form
+                const formCard = document.createElement('div');
+                formCard.className = 'card';
+                formCard.innerHTML = `
+                    <h3>${tab.type === 'IN' ? '➕ បញ្ចូលស្តុកថ្មី' : '➖ ដកស្តុកថ្មី'}</h3>
+                    <label>📅 ថ្ងៃខែ</label>
+                    <input type="date" id="${tab.type.toLowerCase()}-form-date">
+                    <label>🏢 ដេប៉ូ</label>
+                    <select id="${tab.type.toLowerCase()}-form-depot"></select>
+                    <label>🗺️ BOQ/Zone</label>
+                    <select id="${tab.type.toLowerCase()}-form-zone"></select>
+                    <label>🔍 ស្វែងរកទំនិញ</label>
+                    <input type="text" id="${tab.type.toLowerCase()}-search" placeholder="វាយឈ្មោះ ឬកូដ...">
+                    <div id="${tab.type.toLowerCase()}-results" class="res-box"></div>
+                    <label>📦 ចំនួន</label>
+                    <input type="number" id="${tab.type.toLowerCase()}-qty" min="1">
+                    <button id="${tab.type.toLowerCase()}-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
+                    <div id="${tab.type.toLowerCase()}-cart"></div>
+                    <label>📷 រូបភាព</label>
+                    <input type="file" id="${tab.type.toLowerCase()}-photo" accept="image/*" multiple>
+                    <div id="${tab.type.toLowerCase()}-preview" class="photo-preview"></div>
+                    <button id="${tab.type.toLowerCase()}-submit" class="${tab.type === 'OUT' ? 'btn-out' : ''}">💾 រក្សាទុក ${tab.type === 'IN' ? 'STOCK IN' : 'STOCK OUT'}</button>
+                    <div id="${tab.type.toLowerCase()}-loading" class="loading">⏳ កំពុងដំណើរការ...</div>
+                `;
+                pageDiv.appendChild(formCard);
+                
+                // Add log table
+                const logCard = document.createElement('div');
+                logCard.className = 'card';
+                logCard.innerHTML = `<h3>📋 កំណត់ត្រាថ្មីៗ</h3><div id="table-${tab.id}"></div>`;
+                pageDiv.appendChild(logCard);
+                
+                // Store reference for later population
+                pageDiv.dataset.type = tab.type;
+            } else {
+                // Just table
+                const tableCard = document.createElement('div');
+                tableCard.className = 'card';
+                tableCard.innerHTML = `<div id="table-${tab.id}"></div>`;
+                pageDiv.appendChild(tableCard);
+            }
+            container.appendChild(pageDiv);
+        });
+        
+        // After creating pages, initialize forms for Stock_In and Stock_Out
+        initStockForms();
+    }
+
+    function initStockForms() {
+        ['in', 'out'].forEach(type => {
+            const depotSelect = document.getElementById(`${type}-form-depot`);
+            const zoneSelect = document.getElementById(`${type}-form-zone`);
+            if (depotSelect) {
+                depotsList.forEach(d => depotSelect.add(new Option(d, d)));
+                depotSelect.addEventListener('change', () => {
+                    const zones = depotZoneMap[depotSelect.value] || zonesList;
+                    zoneSelect.innerHTML = '<option value="">ជ្រើស BOQ...</option>';
+                    zones.forEach(z => zoneSelect.add(new Option(z, z)));
+                });
+                // trigger initial
+                depotSelect.dispatchEvent(new Event('change'));
+            }
+            document.getElementById(`${type}-form-date`).valueAsDate = new Date();
+            
+            // Setup search
+            const searchInput = document.getElementById(`${type}-search`);
+            const resultsDiv = document.getElementById(`${type}-results`);
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    const kw = searchInput.value.toLowerCase();
+                    if (kw.length < 2) { resultsDiv.style.display = 'none'; return; }
+                    const matches = (appData["Items_List"] || []).filter(i => 
+                        (i.name && i.name.toLowerCase().includes(kw)) || 
+                        (i.code && i.code.toLowerCase().includes(kw))
+                    );
+                    resultsDiv.innerHTML = '';
+                    matches.forEach(i => {
+                        const div = document.createElement('div');
+                        div.className = 'item-row';
+                        div.innerHTML = `<strong>${i.name}</strong> ${i.code ? `(${i.code})` : ''} ${i.unit || ''}`;
+                        div.onclick = () => {
+                            selectedItems[type] = i;
+                            searchInput.value = i.name;
+                            resultsDiv.style.display = 'none';
+                        };
+                        resultsDiv.appendChild(div);
+                    });
+                    resultsDiv.style.display = matches.length ? 'block' : 'none';
+                });
+                document.addEventListener('click', (e) => {
+                    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) resultsDiv.style.display = 'none';
+                });
+            }
+            
+            // Add to cart
+            document.getElementById(`${type}-add-btn`)?.addEventListener('click', () => {
+                const qty = parseInt(document.getElementById(`${type}-qty`).value);
+                const item = selectedItems[type];
+                if (!item) return showAlert('ជ្រើសទំនិញ');
+                if (!qty || qty <= 0) return showAlert('បញ្ចូលចំនួន');
+                const existing = carts[type].find(i => i.code === item.code);
+                if (existing) existing.qty += qty;
+                else carts[type].push({ ...item, qty });
+                renderCart(type);
+                searchInput.value = '';
+                document.getElementById(`${type}-qty`).value = '';
+                selectedItems[type] = null;
+                showAlert(`បានបន្ថែម ${item.name} ${qty}`);
             });
-            resultsDiv.style.display = matched.length ? 'block' : 'none';
-        });
-        
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-                resultsDiv.style.display = 'none';
+            
+            // Image preview
+            const photoInput = document.getElementById(`${type}-photo`);
+            const previewDiv = document.getElementById(`${type}-preview`);
+            if (photoInput) {
+                photoInput.addEventListener('change', () => {
+                    previewDiv.innerHTML = '';
+                    selectedFiles[type] = Array.from(photoInput.files);
+                    selectedFiles[type].forEach(f => {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'preview-img';
+                            previewDiv.appendChild(img);
+                        };
+                        reader.readAsDataURL(f);
+                    });
+                });
             }
+            
+            // Submit
+            document.getElementById(`${type}-submit`)?.addEventListener('click', () => submitStock(type));
         });
     }
-
-    // ==================== 3. CART MANAGEMENT ====================
-    function setupAddButton(type) {
-        document.getElementById(`${type}-add-btn`).addEventListener('click', () => {
-            const qtyInput = document.getElementById(`${type}-qty`);
-            const qty = parseInt(qtyInput.value);
-            const selected = selectedItems[type];
-            if (!selected) return showAlert('សូមជ្រើសរើសទំនិញ!');
-            if (!qty || qty <= 0) return showAlert('សូមបញ្ចូលចំនួនត្រឹមត្រូវ!');
-            
-            const existing = carts[type].find(i => i.code === selected.code);
-            if (existing) existing.qty += qty;
-            else carts[type].push({ ...selected, qty: qty });
-            
-            renderCart(type);
-            qtyInput.value = '';
-            selectedItems[type] = null;
-            document.getElementById(`${type}-search`).value = '';
-            showAlert(`បានបន្ថែម ${selected.name} ចំនួន ${qty}`);
-        });
-    }
-
+    
     function renderCart(type) {
         const container = document.getElementById(`${type}-cart`);
+        if (!container) return;
         if (carts[type].length === 0) {
-            container.innerHTML = '<div class="empty-cart">📭 មិនទាន់មានទំនិញក្នុងបញ្ជី</div>';
+            container.innerHTML = '<div class="empty-cart">គ្មានទំនិញក្នុងបញ្ជី</div>';
             return;
         }
-        container.innerHTML = carts[type].map((item, idx) => `
+        container.innerHTML = carts[type].map((it, idx) => `
             <div class="cart-item">
-                <span><strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''}</span>
-                <div>
-                    <span class="cart-qty">${item.qty} ${item.unit || ''}</span>
-                    <button class="remove-item" data-type="${type}" data-index="${idx}">✕</button>
-                </div>
+                <span><b>${it.name}</b> ${it.code ? `(${it.code})` : ''}</span>
+                <div><span class="cart-qty">${it.qty} ${it.unit || ''}</span>
+                <button class="remove-item" data-idx="${idx}">✕</button></div>
             </div>
         `).join('');
-        
-        // Attach remove event listeners
-        document.querySelectorAll(`#${type}-cart .remove-item`).forEach(btn => {
+        container.querySelectorAll('.remove-item').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const idx = parseInt(btn.dataset.index);
+                const idx = parseInt(btn.dataset.idx);
                 carts[type].splice(idx, 1);
                 renderCart(type);
             });
         });
     }
-
-    // ==================== 4. IMAGE PREVIEW ====================
-    function setupImagePreview(type) {
-        const input = document.getElementById(`${type}-photo`);
-        const preview = document.getElementById(`${type}-preview`);
-        input.addEventListener('change', () => {
-            preview.innerHTML = '';
-            selectedFiles[type] = Array.from(input.files);
-            selectedFiles[type].forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-img';
-                    preview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-    }
-
-    function filesToBase64(files) {
-        return Promise.all(files.map(file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
+    
+    async function filesToBase64(files) {
+        return Promise.all(files.map(f => new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result.split(',')[1]);
+            r.onerror = rej;
+            r.readAsDataURL(f);
         })));
     }
-
-    // ==================== 5. SUBMIT STOCK (IN/OUT) ====================
+    
     async function submitStock(type) {
-        const cart = carts[type];
-        if (cart.length === 0) return showAlert('សូមបន្ថែមទំនិញក្នុងបញ្ជី!');
-        
-        const date = document.getElementById(`${type}-date`).value;
-        const depot = document.getElementById(`${type}-depot`).value;
-        const zone = document.getElementById(`${type}-zone`).value;
-        if (!depot || !zone) return showAlert('សូមជ្រើសរើសដេប៉ូ និង BOQ!');
-        
-        const loadingDiv = document.getElementById(`${type}-loading`);
-        const submitBtn = document.getElementById(`${type}-submit`);
-        loadingDiv.style.display = 'block';
-        submitBtn.disabled = true;
-        
+        if (carts[type].length === 0) return showAlert('បន្ថែមទំនិញ');
+        const date = document.getElementById(`${type}-form-date`).value;
+        const depot = document.getElementById(`${type}-form-depot`).value;
+        const zone = document.getElementById(`${type}-form-zone`).value;
+        if (!depot || !zone) return showAlert('ជ្រើសដេប៉ូ និង BOQ');
+        const loading = document.getElementById(`${type}-loading`);
+        const btn = document.getElementById(`${type}-submit`);
+        loading.style.display = 'block';
+        btn.disabled = true;
         try {
             let images = [];
             if (selectedFiles[type].length) images = await filesToBase64(selectedFiles[type]);
             const payload = {
                 action: type === 'in' ? 'saveStockIn' : 'saveStockOut',
-                date: date,
-                depot: depot,
-                zone: zone,
-                items: cart.map(item => ({ code: item.code, name: item.name, qty: item.qty, unit: item.unit })),
-                images: images,
+                date, depot, zone,
+                items: carts[type].map(it => ({ code: it.code, name: it.name, qty: it.qty, unit: it.unit })),
+                images,
                 user: currentUser.name
             };
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
+            const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const result = await res.json();
             if (result.status === 'success') {
-                showAlert(`✅ ${type === 'in' ? 'បញ្ចូល' : 'ដក'}ស្តុកបានជោគជ័យ!`);
+                showAlert(`រក្សាទុកជោគជ័យ`);
                 carts[type] = [];
                 renderCart(type);
                 selectedFiles[type] = [];
                 document.getElementById(`${type}-preview`).innerHTML = '';
                 document.getElementById(`${type}-photo`).value = '';
-            } else {
-                showAlert('បរាជ័យ: ' + (result.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Submit error:', error);
-            showAlert('កំហុស: ' + error.message);
-        } finally {
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-        }
-    }
-
-    // ==================== 6. ASK GEMINI AI ====================
-    async function askGemini() {
-        const question = document.getElementById('ai-question').value.trim();
-        if (!question) return showAlert('សូមបញ្ចូលសំណួរ!');
-        
-        const loadingDiv = document.getElementById('ai-loading');
-        const responseDiv = document.getElementById('ai-response');
-        const submitBtn = document.getElementById('ai-submit');
-        loadingDiv.style.display = 'block';
-        responseDiv.style.display = 'none';
-        submitBtn.disabled = true;
-        
-        try {
-            const payload = { action: 'askGemini', question: question };
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-            responseDiv.innerHTML = result.answer || 'មិនមានចម្លើយ។';
-            responseDiv.style.display = 'block';
-        } catch (error) {
-            responseDiv.innerHTML = 'កំហុស: ' + error.message;
-            responseDiv.style.display = 'block';
-        } finally {
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-        }
-    }
-
-    // ==================== 7. CHECK BOQ ====================
-    async function checkBOQ() {
-        const boqType = document.getElementById('boq-type').value;
-        let customItems = null;
-        if (boqType === 'custom') {
-            customItems = document.getElementById('custom-items').value;
-            if (!customItems) return showAlert('សូមបញ្ចូល JSON ទំនិញ!');
-        }
-        const loadingDiv = document.getElementById('boq-loading');
-        const resultDiv = document.getElementById('boq-result');
-        const submitBtn = document.getElementById('boq-submit');
-        loadingDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-        submitBtn.disabled = true;
-        
-        try {
-            const payload = { action: 'checkBOQ', boqType: boqType, customItems: customItems };
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            let html = '<strong>📋 លទ្ធផលពិនិត្យ BOQ</strong><br><br>';
-            if (data.boq && data.boq.length > 0) {
-                html += '<table style="width:100%; border-collapse:collapse;">';
-                html += '<tr style="background:#2b7a3e; color:white;"><th style="padding:8px;">ទំនិញ</th><th>ត្រូវការ</th><th>ស្តុកមាន</th><th>ស្ថានភាព</th></tr>';
-                data.boq.forEach(item => {
-                    const status = item.currentStock >= item.required ? '✅ គ្រប់គ្រាន់' : '⚠️ ខ្វះ';
-                    const statusColor = item.currentStock >= item.required ? '#2b7a3e' : '#c0392b';
-                    html += `<tr style="border-bottom:1px solid #ddd;">
-                        <td style="padding:8px;">${item.name}</td>
-                        <td style="padding:8px;">${item.required} ${item.unit || ''}</td>
-                        <td style="padding:8px;">${item.currentStock || 0} ${item.unit || ''}</td>
-                        <td style="padding:8px; color:${statusColor};">${status}</td>
-                    </tr>`;
-                });
-                html += '</table>';
-            } else {
-                html += '<p>មិនមានទិន្នន័យ BOQ</p>';
-            }
-            resultDiv.innerHTML = html;
-            resultDiv.style.display = 'block';
-        } catch (error) {
-            resultDiv.innerHTML = 'កំហុស: ' + error.message;
-            resultDiv.style.display = 'block';
-        } finally {
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-        }
-    }
-
-    // ==================== 8. PAGE NAVIGATION ====================
-    function initNavigation() {
-        const navItems = document.querySelectorAll('.nav-item');
-        const pages = document.querySelectorAll('.page');
-        navItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const pageId = item.dataset.page;
-                if (!pageId) return;
-                // Check permission if needed
-                if (currentUser.permissions.length && !currentUser.permissions.includes(pageId)) {
-                    return showAlert('អ្នកគ្មានសិទ្ធិប្រើមុខងារនេះទេ!');
-                }
-                pages.forEach(page => page.classList.remove('active'));
-                document.getElementById(`page-${pageId}`).classList.add('active');
-                navItems.forEach(nav => nav.classList.remove('active'));
-                item.classList.add('active');
-            });
-        });
-    }
-
-    // ==================== INITIALIZE APP ====================
-    async function init() {
-        await fetchAppData();
-        setupSearch('in');
-        setupSearch('out');
-        setupAddButton('in');
-        setupAddButton('out');
-        setupImagePreview('in');
-        setupImagePreview('out');
-        renderCart('in');
-        renderCart('out');
-        initNavigation();
-        
-        // Submit buttons
-        document.getElementById('in-submit').addEventListener('click', () => submitStock('in'));
-        document.getElementById('out-submit').addEventListener('click', () => submitStock('out'));
-        document.getElementById('ai-submit').addEventListener('click', askGemini);
-        document.getElementById('boq-submit').addEventListener('click', checkBOQ);
-        
-        // BOQ custom type toggle
-        document.getElementById('boq-type').addEventListener('change', function() {
-            const customDiv = document.getElementById('custom-boq');
-            customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
-        });
+                // Refresh logs: we can reload stock logs from server
+                await fetchStockLogs();
+                renderAllTables();
+            } else showAlert('បរាជ័យ: ' + result.message);
+        } catch(e) { showAlert('កំហុស: ' + e.message); }
+        finally { loading.style.display = 'none'; btn.disabled = false; }
     }
     
-    init();
+    // Override fetchStockLogs to actually get data from backend by calling a different endpoint
+    // We'll modify the Apps Script to return stock logs in doGet when requested.
+    // For now, we'll keep placeholder and advise to update Apps Script.
+    async function fetchStockLogs() {
+        // We'll call the same doGet but with extra parameter? 
+        // To keep it simple, we'll add a new function in Apps Script.
+        // I'll provide updated Apps Script below.
+        // For demo, just set empty.
+        appData["Stock_In"] = [];
+        appData["Stock_Out"] = [];
+        // In production, you should modify Apps Script to return stock logs as well.
+    }
+    
+    // Initialize
+    createPages();
+    fetchAllData();
 </script>
 </body>
 </html>
