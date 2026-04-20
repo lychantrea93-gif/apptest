@@ -151,7 +151,7 @@
         .loading { display: none; text-align: center; padding: 12px; color: #2b7a3e; }
         .photo-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
         .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
-        .debug-info { background: #fff3cd; padding: 8px; margin-bottom: 10px; font-size: 12px; display: none; }
+        .relative { position: relative; }
     </style>
 </head>
 <body>
@@ -199,8 +199,7 @@
             console.log("Fetching data from:", url);
             const res = await fetch(url);
             const data = await res.json();
-            console.log("Received data:", data);
-            
+            console.log("Data received:", data);
             appData.stockIn = data.stockIn || [];
             appData.stockOut = data.stockOut || [];
             appData.balance = data.balance || [];
@@ -211,6 +210,9 @@
             depotZoneMap = data.depotZoneMap || {};
             
             console.log("Items loaded:", appData.items.length);
+            if (appData.items.length === 0) {
+                console.warn("No items found! Check Apps Script 'items' response.");
+            }
             
             renderTable('balance', appData.balance);
             renderTable('boq', appData.boq);
@@ -332,96 +334,92 @@
     }
 
     function initForms() {
-        console.log("initForms called, items count:", appData.items.length);
+        console.log("Initializing forms...");
         ['in', 'out'].forEach(type => {
-            const searchInput = document.getElementById(`${type}-search`);
-            const resultsDiv = document.getElementById(`${type}-results`);
-            
-            if (!searchInput) {
-                console.warn(`Search input not found for ${type}`);
-                return;
-            }
-            if (!resultsDiv) {
-                console.warn(`Results div not found for ${type}`);
-                return;
-            }
-            
-            // Clear any existing listeners to avoid duplicates
-            const newSearchInput = searchInput.cloneNode(true);
-            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-            const newResultsDiv = resultsDiv.cloneNode(true);
-            resultsDiv.parentNode.replaceChild(newResultsDiv, resultsDiv);
-            
-            const finalSearchInput = document.getElementById(`${type}-search`);
-            const finalResultsDiv = document.getElementById(`${type}-results`);
-            
-            finalSearchInput.addEventListener('input', (e) => {
-                const kw = finalSearchInput.value.toLowerCase().trim();
-                console.log(`Searching for: "${kw}"`);
-                if (kw.length < 2) {
-                    finalResultsDiv.style.display = 'none';
-                    finalResultsDiv.innerHTML = '';
-                    return;
-                }
-                const matches = appData.items.filter(i => 
-                    (i.name && i.name.toLowerCase().includes(kw)) || 
-                    (i.code && i.code.toLowerCase().includes(kw))
-                );
-                console.log(`Found ${matches.length} matches`);
-                finalResultsDiv.innerHTML = '';
-                if (matches.length === 0) {
-                    const noResult = document.createElement('div');
-                    noResult.className = 'item-row';
-                    noResult.innerText = 'រកមិនឃើញទំនិញ';
-                    finalResultsDiv.appendChild(noResult);
-                } else {
-                    matches.slice(0, 15).forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'item-row';
-                        div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
-                        div.onclick = () => {
-                            selectedItems[type] = item;
-                            finalSearchInput.value = item.name;
-                            finalResultsDiv.style.display = 'none';
-                            console.log(`Selected: ${item.name}`);
-                        };
-                        finalResultsDiv.appendChild(div);
-                    });
-                }
-                finalResultsDiv.style.display = 'block';
-            });
-            
-            // Close when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!finalSearchInput.contains(e.target) && !finalResultsDiv.contains(e.target)) {
-                    finalResultsDiv.style.display = 'none';
-                }
-            });
-            
-            // Depot and Zone dropdowns (existing code)
+            // Populate depot dropdown
             const depotSelect = document.getElementById(`${type}-depot`);
-            const zoneSelect = document.getElementById(`${type}-zone`);
             if (depotSelect && depotsList.length) {
+                depotSelect.innerHTML = '<option value="">ជ្រើសរើសដេប៉ូ...</option>';
                 depotsList.forEach(d => depotSelect.add(new Option(d, d)));
             }
+            
+            // Populate BOQ dropdown (all zones)
+            const zoneSelect = document.getElementById(`${type}-zone`);
             if (zoneSelect && zonesList.length) {
                 zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
                 zonesList.forEach(z => zoneSelect.add(new Option(z, z)));
             }
             
-            // Date
+            // Set date
             const dateInput = document.getElementById(`${type}-date`);
             if (dateInput) dateInput.valueAsDate = new Date();
+            
+            // Setup search
+            const searchInput = document.getElementById(`${type}-search`);
+            const resultsDiv = document.getElementById(`${type}-results`);
+            if (searchInput && resultsDiv) {
+                // Remove old event listeners by cloning
+                const newSearch = searchInput.cloneNode(true);
+                searchInput.parentNode.replaceChild(newSearch, searchInput);
+                const newResults = resultsDiv.cloneNode(true);
+                resultsDiv.parentNode.replaceChild(newResults, resultsDiv);
+                
+                const finalSearch = document.getElementById(`${type}-search`);
+                const finalResults = document.getElementById(`${type}-results`);
+                
+                finalSearch.addEventListener('input', (e) => {
+                    const kw = e.target.value.toLowerCase().trim();
+                    console.log(`Searching ${type}: "${kw}"`);
+                    if (kw.length < 2) {
+                        finalResults.style.display = 'none';
+                        finalResults.innerHTML = '';
+                        return;
+                    }
+                    const matches = appData.items.filter(item => 
+                        (item.name && item.name.toLowerCase().includes(kw)) ||
+                        (item.code && item.code.toLowerCase().includes(kw))
+                    );
+                    console.log(`Found ${matches.length} matches`);
+                    finalResults.innerHTML = '';
+                    if (matches.length === 0) {
+                        const div = document.createElement('div');
+                        div.className = 'item-row';
+                        div.innerText = 'រកមិនឃើញទំនិញ';
+                        finalResults.appendChild(div);
+                    } else {
+                        matches.slice(0, 15).forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'item-row';
+                            div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
+                            div.onclick = () => {
+                                selectedItems[type] = item;
+                                finalSearch.value = item.name;
+                                finalResults.style.display = 'none';
+                                console.log(`Selected: ${item.name}`);
+                            };
+                            finalResults.appendChild(div);
+                        });
+                    }
+                    finalResults.style.display = 'block';
+                });
+                
+                document.addEventListener('click', (e) => {
+                    if (!finalSearch.contains(e.target) && !finalResults.contains(e.target)) {
+                        finalResults.style.display = 'none';
+                    }
+                });
+            } else {
+                console.warn(`Search elements not found for ${type}`);
+            }
             
             // Add to cart button
             const addBtn = document.getElementById(`${type}-add`);
             if (addBtn) {
-                // Remove old listeners
                 const newAddBtn = addBtn.cloneNode(true);
                 addBtn.parentNode.replaceChild(newAddBtn, addBtn);
-                const finalAddBtn = document.getElementById(`${type}-add`);
-                finalAddBtn.onclick = () => {
-                    const qty = parseInt(document.getElementById(`${type}-qty`).value);
+                newAddBtn.onclick = () => {
+                    const qtyInput = document.getElementById(`${type}-qty`);
+                    const qty = parseInt(qtyInput?.value);
                     const item = selectedItems[type];
                     if (!item) return showAlert('ជ្រើសរើសទំនិញ');
                     if (!qty || qty <= 0) return showAlert('បញ្ចូលចំនួន');
@@ -429,8 +427,9 @@
                     if (existing) existing.qty += qty;
                     else carts[type].push({ ...item, qty });
                     renderCart(type);
-                    finalSearchInput.value = '';
-                    document.getElementById(`${type}-qty`).value = '';
+                    const searchInputField = document.getElementById(`${type}-search`);
+                    if (searchInputField) searchInputField.value = '';
+                    if (qtyInput) qtyInput.value = '';
                     selectedItems[type] = null;
                     showAlert(`បានបន្ថែម ${item.name} ${qty}`);
                 };
@@ -440,12 +439,9 @@
             const photoInput = document.getElementById(`${type}-photo`);
             const previewDiv = document.getElementById(`${type}-preview`);
             if (photoInput && previewDiv) {
-                const newPhotoInput = photoInput.cloneNode(true);
-                photoInput.parentNode.replaceChild(newPhotoInput, photoInput);
-                const finalPhotoInput = document.getElementById(`${type}-photo`);
-                finalPhotoInput.addEventListener('change', () => {
+                photoInput.onchange = () => {
                     previewDiv.innerHTML = '';
-                    selectedFiles[type] = Array.from(finalPhotoInput.files);
+                    selectedFiles[type] = Array.from(photoInput.files);
                     selectedFiles[type].forEach(f => {
                         const reader = new FileReader();
                         reader.onload = e => {
@@ -456,17 +452,18 @@
                         };
                         reader.readAsDataURL(f);
                     });
-                });
+                };
             }
             
             // Submit button
             const submitBtn = document.getElementById(`${type}-submit`);
             if (submitBtn) {
-                const newSubmitBtn = submitBtn.cloneNode(true);
-                submitBtn.parentNode.replaceChild(newSubmitBtn, submitBtn);
-                document.getElementById(`${type}-submit`).onclick = () => submitStock(type);
+                const newSubmit = submitBtn.cloneNode(true);
+                submitBtn.parentNode.replaceChild(newSubmit, submitBtn);
+                newSubmit.onclick = () => submitStock(type);
             }
         });
+        console.log("Forms initialization complete.");
     }
 
     function switchPage(pageId) {
@@ -505,8 +502,10 @@
                         <label>🗺️ BOQ/Zone</label>
                         <select id="${page.type}-zone"></select>
                         <label>🔍 ស្វែងរកទំនិញ</label>
-                        <input type="text" id="${page.type}-search" placeholder="វាយឈ្មោះ ឬកូដ...">
-                        <div id="${page.type}-results" class="res-box"></div>
+                        <div class="relative">
+                            <input type="text" id="${page.type}-search" placeholder="វាយឈ្មោះ ឬកូដ..." autocomplete="off">
+                            <div id="${page.type}-results" class="res-box"></div>
+                        </div>
                         <label>📦 ចំនួន</label>
                         <input type="number" id="${page.type}-qty" min="1">
                         <button id="${page.type}-add">+ បន្ថែមក្នុងបញ្ជី</button>
