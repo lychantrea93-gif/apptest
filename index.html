@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Stock App - 8 Sheets</title>
+    <title>Stock App - 4 Tabs</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { box-sizing: border-box; }
@@ -11,9 +11,8 @@
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto;
             background: #f0f2f5;
             margin: 0;
-            padding: 0 0 80px 0;
+            padding: 0 0 70px 0;
         }
-        /* Bottom navigation - scrollable if many tabs */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -21,22 +20,20 @@
             right: 0;
             background: white;
             display: flex;
-            overflow-x: auto;
-            white-space: nowrap;
+            justify-content: space-around;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             z-index: 100;
-            padding: 5px 0;
+            padding: 8px 0;
         }
         .nav-item {
-            display: inline-block;
             text-align: center;
             padding: 8px 12px;
             cursor: pointer;
             border-radius: 30px;
-            margin: 0 2px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 500;
             color: #6c757d;
+            flex: 1;
         }
         .nav-item.active {
             background: #2b7a3e;
@@ -154,9 +151,13 @@
 </head>
 <body>
 
-<div class="bottom-nav" id="bottomNav"></div>
+<div class="bottom-nav">
+    <div class="nav-item active" data-page="stock_in">📥 STOCK IN</div>
+    <div class="nav-item" data-page="stock_out">📤 STOCK OUT</div>
+    <div class="nav-item" data-page="balance">⚖️ CURRENT BALANCE</div>
+    <div class="nav-item" data-page="boq">📐 BOQ</div>
+</div>
 
-<!-- Dynamically create pages via JS, but we'll predefine containers -->
 <div id="pages-container"></div>
 
 <script>
@@ -164,33 +165,25 @@
     tg.expand();
     tg.MainButton.hide();
 
-    // ========== 🔧 CONFIG - CHANGE THIS URL ==========
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMKkUsciFYB52EfUC-eQUvf-JezPXNJz9q9YTvJnbJkde6MC8SJfC6tBoijwVYzmW5/exec';
-    // ================================================
+    // ========== CONFIG - CHANGE THIS URL ==========
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5WXFdeINm00_nJQy2uJB3SkHk6gJ9UT3ktMKQ6wP1oW_AVojcD_n2FjS49zLOBGbM/exec';
+    // =============================================
 
-    // Define all 8 sheets/tabs
-    const TABS = [
-        { id: "items_list", label: "📦 Items_List", sheetName: "Items_List" },
-        { id: "data_base", label: "🗄️ Data base", sheetName: "Data base" },
-        { id: "closing", label: "📆 Closing Stock", sheetName: "Closing Stock Monthly" },
-        { id: "stock_in", label: "📥 Stock_In", sheetName: "Stock_In", hasForm: true, type: "IN" },
-        { id: "stock_out", label: "📤 Stock_Out", sheetName: "Stock_Out", hasForm: true, type: "OUT" },
-        { id: "balance", label: "⚖️ Current Balance", sheetName: "Current Balance" },
-        { id: "boq", label: "📐 BOQ", sheetName: "BOQ" },
-        { id: "users", label: "👥 Users", sheetName: "Users" }
-    ];
-
-    let appData = {};  // will store all sheet data
-    let currentUser = { id: null, name: "Guest", permissions: [] };
+    let appData = {
+        stockIn: [],
+        stockOut: [],
+        balance: [],
+        boq: [],
+        items: []      // for product search in stock forms
+    };
+    let currentUser = { id: null, name: "Guest" };
     let carts = { in: [], out: [] };
     let selectedItems = { in: null, out: null };
     let selectedFiles = { in: [], out: [] };
     let depotsList = [], zonesList = [], depotZoneMap = {};
 
-    // Helper
     function showAlert(msg) { tg.showAlert(msg); }
 
-    // Fetch all data from Apps Script
     async function fetchAllData() {
         try {
             if (tg.initDataUnsafe?.user) {
@@ -200,186 +193,71 @@
             const url = `${SCRIPT_URL}?userId=${currentUser.id || ''}`;
             const res = await fetch(url);
             const data = await res.json();
-            // Store each sheet data
-            appData["Items_List"] = data.items || [];
-            appData["Data base"] = data.database || [];
-            appData["Closing Stock Monthly"] = data.closing || [];
-            appData["Stock_In"] = [];  // will be fetched separately if needed, but backend returns all? We'll call again or restructure. For simplicity, we'll rely on existing.
-            appData["Stock_Out"] = [];
-            appData["Current Balance"] = data.balance || [];
-            appData["BOQ"] = data.boq || [];
-            appData["Users"] = []; // not returned by default, can add later
+            appData.stockIn = data.stockIn || [];
+            appData.stockOut = data.stockOut || [];
+            appData.balance = data.balance || [];
+            appData.boq = data.boq || [];
+            appData.items = data.items || [];      // for product search
+            depotsList = data.depots || [];
+            zonesList = data.zones || [];
+            depotZoneMap = data.depotZoneMap || {};
             
-            // For Stock_In and Stock_Out, we might need separate fetch, but backend can be extended. 
-            // For now, we'll assume they are empty or we can add a separate call.
-            // But user wants to see logs, we need to get them. Let's add a separate fetch for stock logs.
-            await fetchStockLogs();
-            
-            // Also extract depots/zones from Data base
-            if (appData["Data base"].length) {
-                const depSet = new Set();
-                const zoneSet = new Set();
-                const map = {};
-                appData["Data base"].forEach(row => {
-                    const depot = row.depot || row["depot"] || row["ដេប៉ូ"];
-                    const zone = row.boq_zone || row["boq/zone"] || row["boq"];
-                    if (depot) {
-                        depSet.add(depot);
-                        if (zone) {
-                            if (!map[depot]) map[depot] = [];
-                            if (!map[depot].includes(zone)) map[depot].push(zone);
-                            zoneSet.add(zone);
-                        }
-                    }
-                });
-                depotsList = Array.from(depSet);
-                zonesList = Array.from(zoneSet);
-                depotZoneMap = map;
-            }
-            
-            // Render all tables
-            renderAllTables();
-            // Build navigation
-            buildNavigation();
-            // Activate first tab
-            switchTab(TABS[0].id);
+            renderTable('balance', appData.balance);
+            renderTable('boq', appData.boq);
+            renderStockLogs('stock_in', appData.stockIn);
+            renderStockLogs('stock_out', appData.stockOut);
+            initForms();
         } catch (e) {
             showAlert("ទាញទិន្នន័យបរាជ័យ: " + e.message);
         }
     }
 
-    async function fetchStockLogs() {
-        // We need to get Stock_In and Stock_Out data from backend.
-        // Since backend currently doesn't return them in doGet, we can add a separate endpoint or modify doGet.
-        // For simplicity, we'll add a new action to doPost? Better to modify doGet to include stock logs if requested.
-        // To avoid complexity, we'll assume the user will rely on the form to add and view logs via the same sheet.
-        // We'll create a function to read directly from sheet using Apps Script? Not possible client-side.
-        // Alternative: add two more parameters to doGet. But let's keep it simple: we'll display an empty table with message.
-        // The user can still add stock via the form, and the logs will appear after refresh.
-        // For better UX, we can add a refresh button.
-        appData["Stock_In"] = []; // placeholder
-        appData["Stock_Out"] = [];
-        // In real scenario, you'd modify Apps Script to return stock logs. I'll provide updated Apps Script at the end.
-    }
-
-    function renderAllTables() {
-        TABS.forEach(tab => {
-            const sheetName = tab.sheetName;
-            const data = appData[sheetName] || [];
-            const container = document.getElementById(`table-${tab.id}`);
-            if (container) {
-                if (data.length === 0) {
-                    container.innerHTML = '<div class="empty-cart">គ្មានទិន្នន័យ</div>';
-                } else {
-                    const headers = Object.keys(data[0]);
-                    let html = '<div class="table-wrapper"><table><thead><tr>';
-                    headers.forEach(h => html += `<th>${h}</th>`);
-                    html += '</tr></thead><tbody>';
-                    data.forEach(row => {
-                        html += '<tr>';
-                        headers.forEach(h => html += `<td>${row[h] ?? ''}</td>`);
-                        html += '</tr>';
-                    });
-                    html += '</tbody></table></div>';
-                    container.innerHTML = html;
-                }
-            }
+    function renderTable(pageId, data) {
+        const container = document.getElementById(`table-${pageId}`);
+        if (!container) return;
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="empty-cart">គ្មានទិន្នន័យ</div>';
+            return;
+        }
+        const headers = Object.keys(data[0]);
+        let html = '<div class="table-wrapper"><table><thead><tr>';
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+        data.forEach(row => {
+            html += '<tr>';
+            headers.forEach(h => html += `<td>${row[h] ?? ''}</td>`);
+            html += '</tr>';
         });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
     }
 
-    function buildNavigation() {
-        const nav = document.getElementById('bottomNav');
-        nav.innerHTML = '';
-        TABS.forEach((tab, idx) => {
-            const btn = document.createElement('div');
-            btn.className = 'nav-item';
-            if (idx === 0) btn.classList.add('active');
-            btn.innerText = tab.label;
-            btn.dataset.id = tab.id;
-            btn.addEventListener('click', () => switchTab(tab.id));
-            nav.appendChild(btn);
+    function renderStockLogs(pageId, data) {
+        const container = document.getElementById(`table-${pageId}`);
+        if (!container) return;
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="empty-cart">គ្មានកំណត់ត្រា</div>';
+            return;
+        }
+        // show only last 20 records
+        const recent = data.slice(-20);
+        const headers = Object.keys(recent[0]);
+        let html = '<div class="table-wrapper"><table><thead><tr>';
+        headers.forEach(h => html += `<th>${h}</th>`);
+        html += '</tr></thead><tbody>';
+        recent.reverse().forEach(row => {
+            html += '<tr>';
+            headers.forEach(h => html += `<td>${row[h] ?? ''}</td>`);
+            html += '</tr>';
         });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
     }
 
-    function switchTab(tabId) {
-        // Hide all pages
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        const targetPage = document.getElementById(`page-${tabId}`);
-        if (targetPage) targetPage.classList.add('active');
-        // Update nav active
-        document.querySelectorAll('.nav-item').forEach(nav => {
-            nav.classList.remove('active');
-            if (nav.dataset.id === tabId) nav.classList.add('active');
-        });
-    }
-
-    // Create dynamic pages
-    function createPages() {
-        const container = document.getElementById('pages-container');
-        container.innerHTML = '';
-        TABS.forEach(tab => {
-            const pageDiv = document.createElement('div');
-            pageDiv.id = `page-${tab.id}`;
-            pageDiv.className = 'page';
-            
-            // Title
-            const title = document.createElement('h3');
-            title.innerText = tab.label;
-            pageDiv.appendChild(title);
-            
-            if (tab.hasForm) {
-                // Add stock entry form
-                const formCard = document.createElement('div');
-                formCard.className = 'card';
-                formCard.innerHTML = `
-                    <h3>${tab.type === 'IN' ? '➕ បញ្ចូលស្តុកថ្មី' : '➖ ដកស្តុកថ្មី'}</h3>
-                    <label>📅 ថ្ងៃខែ</label>
-                    <input type="date" id="${tab.type.toLowerCase()}-form-date">
-                    <label>🏢 ដេប៉ូ</label>
-                    <select id="${tab.type.toLowerCase()}-form-depot"></select>
-                    <label>🗺️ BOQ/Zone</label>
-                    <select id="${tab.type.toLowerCase()}-form-zone"></select>
-                    <label>🔍 ស្វែងរកទំនិញ</label>
-                    <input type="text" id="${tab.type.toLowerCase()}-search" placeholder="វាយឈ្មោះ ឬកូដ...">
-                    <div id="${tab.type.toLowerCase()}-results" class="res-box"></div>
-                    <label>📦 ចំនួន</label>
-                    <input type="number" id="${tab.type.toLowerCase()}-qty" min="1">
-                    <button id="${tab.type.toLowerCase()}-add-btn">+ បន្ថែមក្នុងបញ្ជី</button>
-                    <div id="${tab.type.toLowerCase()}-cart"></div>
-                    <label>📷 រូបភាព</label>
-                    <input type="file" id="${tab.type.toLowerCase()}-photo" accept="image/*" multiple>
-                    <div id="${tab.type.toLowerCase()}-preview" class="photo-preview"></div>
-                    <button id="${tab.type.toLowerCase()}-submit" class="${tab.type === 'OUT' ? 'btn-out' : ''}">💾 រក្សាទុក ${tab.type === 'IN' ? 'STOCK IN' : 'STOCK OUT'}</button>
-                    <div id="${tab.type.toLowerCase()}-loading" class="loading">⏳ កំពុងដំណើរការ...</div>
-                `;
-                pageDiv.appendChild(formCard);
-                
-                // Add log table
-                const logCard = document.createElement('div');
-                logCard.className = 'card';
-                logCard.innerHTML = `<h3>📋 កំណត់ត្រាថ្មីៗ</h3><div id="table-${tab.id}"></div>`;
-                pageDiv.appendChild(logCard);
-                
-                // Store reference for later population
-                pageDiv.dataset.type = tab.type;
-            } else {
-                // Just table
-                const tableCard = document.createElement('div');
-                tableCard.className = 'card';
-                tableCard.innerHTML = `<div id="table-${tab.id}"></div>`;
-                pageDiv.appendChild(tableCard);
-            }
-            container.appendChild(pageDiv);
-        });
-        
-        // After creating pages, initialize forms for Stock_In and Stock_Out
-        initStockForms();
-    }
-
-    function initStockForms() {
+    function initForms() {
         ['in', 'out'].forEach(type => {
-            const depotSelect = document.getElementById(`${type}-form-depot`);
-            const zoneSelect = document.getElementById(`${type}-form-zone`);
+            const depotSelect = document.getElementById(`${type}-depot`);
+            const zoneSelect = document.getElementById(`${type}-zone`);
             if (depotSelect) {
                 depotsList.forEach(d => depotSelect.add(new Option(d, d)));
                 depotSelect.addEventListener('change', () => {
@@ -387,19 +265,18 @@
                     zoneSelect.innerHTML = '<option value="">ជ្រើស BOQ...</option>';
                     zones.forEach(z => zoneSelect.add(new Option(z, z)));
                 });
-                // trigger initial
                 depotSelect.dispatchEvent(new Event('change'));
             }
-            document.getElementById(`${type}-form-date`).valueAsDate = new Date();
+            document.getElementById(`${type}-date`).valueAsDate = new Date();
             
-            // Setup search
+            // Search
             const searchInput = document.getElementById(`${type}-search`);
             const resultsDiv = document.getElementById(`${type}-results`);
             if (searchInput) {
                 searchInput.addEventListener('input', () => {
                     const kw = searchInput.value.toLowerCase();
                     if (kw.length < 2) { resultsDiv.style.display = 'none'; return; }
-                    const matches = (appData["Items_List"] || []).filter(i => 
+                    const matches = appData.items.filter(i => 
                         (i.name && i.name.toLowerCase().includes(kw)) || 
                         (i.code && i.code.toLowerCase().includes(kw))
                     );
@@ -423,7 +300,7 @@
             }
             
             // Add to cart
-            document.getElementById(`${type}-add-btn`)?.addEventListener('click', () => {
+            document.getElementById(`${type}-add`)?.addEventListener('click', () => {
                 const qty = parseInt(document.getElementById(`${type}-qty`).value);
                 const item = selectedItems[type];
                 if (!item) return showAlert('ជ្រើសទំនិញ');
@@ -497,9 +374,9 @@
     
     async function submitStock(type) {
         if (carts[type].length === 0) return showAlert('បន្ថែមទំនិញ');
-        const date = document.getElementById(`${type}-form-date`).value;
-        const depot = document.getElementById(`${type}-form-depot`).value;
-        const zone = document.getElementById(`${type}-form-zone`).value;
+        const date = document.getElementById(`${type}-date`).value;
+        const depot = document.getElementById(`${type}-depot`).value;
+        const zone = document.getElementById(`${type}-zone`).value;
         if (!depot || !zone) return showAlert('ជ្រើសដេប៉ូ និង BOQ');
         const loading = document.getElementById(`${type}-loading`);
         const btn = document.getElementById(`${type}-submit`);
@@ -524,28 +401,77 @@
                 selectedFiles[type] = [];
                 document.getElementById(`${type}-preview`).innerHTML = '';
                 document.getElementById(`${type}-photo`).value = '';
-                // Refresh logs: we can reload stock logs from server
-                await fetchStockLogs();
-                renderAllTables();
+                // Refresh logs
+                await fetchAllData();
             } else showAlert('បរាជ័យ: ' + result.message);
         } catch(e) { showAlert('កំហុស: ' + e.message); }
         finally { loading.style.display = 'none'; btn.disabled = false; }
     }
     
-    // Override fetchStockLogs to actually get data from backend by calling a different endpoint
-    // We'll modify the Apps Script to return stock logs in doGet when requested.
-    // For now, we'll keep placeholder and advise to update Apps Script.
-    async function fetchStockLogs() {
-        // We'll call the same doGet but with extra parameter? 
-        // To keep it simple, we'll add a new function in Apps Script.
-        // I'll provide updated Apps Script below.
-        // For demo, just set empty.
-        appData["Stock_In"] = [];
-        appData["Stock_Out"] = [];
-        // In production, you should modify Apps Script to return stock logs as well.
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${pageId}`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.classList.remove('active');
+            if (nav.dataset.page === pageId) nav.classList.add('active');
+        });
     }
     
-    // Initialize
+    function createPages() {
+        const container = document.getElementById('pages-container');
+        container.innerHTML = '';
+        const pages = [
+            { id: 'stock_in', title: '📥 STOCK IN', hasForm: true, type: 'in' },
+            { id: 'stock_out', title: '📤 STOCK OUT', hasForm: true, type: 'out' },
+            { id: 'balance', title: '⚖️ CURRENT BALANCE', hasForm: false },
+            { id: 'boq', title: '📐 BOQ', hasForm: false }
+        ];
+        pages.forEach(page => {
+            const div = document.createElement('div');
+            div.id = `page-${page.id}`;
+            div.className = 'page';
+            if (page.id === 'stock_in') div.classList.add('active');
+            
+            if (page.hasForm) {
+                div.innerHTML = `
+                    <div class="card">
+                        <h3>${page.title === '📥 STOCK IN' ? '➕ បញ្ចូលស្តុកថ្មី' : '➖ ដកស្តុកថ្មី'}</h3>
+                        <label>📅 ថ្ងៃខែ</label>
+                        <input type="date" id="${page.type}-date">
+                        <label>🏢 ដេប៉ូ</label>
+                        <select id="${page.type}-depot"></select>
+                        <label>🗺️ BOQ/Zone</label>
+                        <select id="${page.type}-zone"></select>
+                        <label>🔍 ស្វែងរកទំនិញ</label>
+                        <input type="text" id="${page.type}-search" placeholder="វាយឈ្មោះ ឬកូដ...">
+                        <div id="${page.type}-results" class="res-box"></div>
+                        <label>📦 ចំនួន</label>
+                        <input type="number" id="${page.type}-qty" min="1">
+                        <button id="${page.type}-add">+ បន្ថែមក្នុងបញ្ជី</button>
+                        <div id="${page.type}-cart"></div>
+                        <label>📷 រូបភាព</label>
+                        <input type="file" id="${page.type}-photo" accept="image/*" multiple>
+                        <div id="${page.type}-preview" class="photo-preview"></div>
+                        <button id="${page.type}-submit" class="${page.type === 'out' ? 'btn-out' : ''}">💾 រក្សាទុក ${page.title}</button>
+                        <div id="${page.type}-loading" class="loading">⏳ កំពុងដំណើរការ...</div>
+                    </div>
+                    <div class="card">
+                        <h3>📋 កំណត់ត្រាថ្មីៗ</h3>
+                        <div id="table-${page.id}"></div>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `<div class="card"><div id="table-${page.id}"></div></div>`;
+            }
+            container.appendChild(div);
+        });
+        
+        // Add navigation listeners
+        document.querySelectorAll('.nav-item').forEach(nav => {
+            nav.addEventListener('click', () => switchPage(nav.dataset.page));
+        });
+    }
+    
     createPages();
     fetchAllData();
 </script>
