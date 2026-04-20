@@ -13,8 +13,6 @@
             margin: 0; 
             padding-bottom: 80px;
         }
-        
-        /* របារខាងក្រោម */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -32,20 +30,14 @@
             padding: 8px 12px;
             border-radius: 30px;
             cursor: pointer;
-            transition: 0.2s;
             flex: 1;
             margin: 0 4px;
         }
-        .nav-item.active {
-            background: #2b7a3e;
-            color: white;
-        }
+        .nav-item.active { background: #2b7a3e; color: white; }
         .nav-item .icon { font-size: 24px; display: block; }
         .nav-item .label { font-size: 11px; margin-top: 4px; }
-        
         .page { display: none; padding: 12px; }
         .page.active { display: block; }
-        
         .card {
             background: white;
             margin: 12px 0;
@@ -64,7 +56,6 @@
             font-family: inherit;
         }
         textarea { resize: vertical; min-height: 80px; }
-        
         button {
             background: #2b7a3e;
             color: white;
@@ -79,8 +70,6 @@
         }
         button.btn-out { background: #c0392b; }
         button.btn-ai { background: #8e44ad; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
-        
         .res-box {
             border: 1px solid #ddd;
             max-height: 200px;
@@ -100,7 +89,6 @@
             cursor: pointer;
         }
         .item-row:hover { background: #e8f5e9; }
-        
         .cart-item {
             background: #f8f9fa;
             padding: 8px 12px;
@@ -113,8 +101,7 @@
         .cart-qty { background: #2b7a3e; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
         .remove-item { background: none; border: none; color: #c0392b; font-size: 18px; cursor: pointer; }
         .empty-cart { color: #adb5bd; text-align: center; padding: 16px; font-size: 13px; }
-        
-        .ai-response {
+        .ai-response, .boq-result {
             background: #f3e8ff;
             padding: 12px;
             border-radius: 12px;
@@ -122,29 +109,14 @@
             white-space: pre-wrap;
             font-size: 14px;
         }
-        .boq-result {
-            background: #e8f5e9;
-            padding: 12px;
-            border-radius: 12px;
-            margin-top: 12px;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 12px;
-            color: #2b7a3e;
-        }
+        .boq-result { background: #e8f5e9; }
+        .loading { display: none; text-align: center; padding: 12px; color: #2b7a3e; }
         .photo-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .preview-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
-        
-        @media (max-width: 480px) {
-            .nav-item .label { font-size: 10px; }
-        }
     </style>
 </head>
 <body>
 
-<!-- របារខាងក្រោមសម្រាប់ប្តូរមុខងារ -->
 <div class="bottom-nav">
     <div class="nav-item active" onclick="switchPage('in')">
         <div class="icon">📥</div>
@@ -164,7 +136,7 @@
     </div>
 </div>
 
-<!-- ==================== PAGE 1: STOCK IN ==================== -->
+<!-- PAGE STOCK IN -->
 <div id="page-in" class="page active">
     <div class="card">
         <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
@@ -172,10 +144,9 @@
         <input type="date" id="inDate">
         <label>🏢 ដេប៉ូ</label>
         <select id="inDepot"></select>
-        <label>🗺️ តំបន់/BOQ</label>
+        <label>🗺️ BOQ/តំបន់</label>
         <select id="inZone"></select>
     </div>
-    
     <div class="card">
         <h3>📦 បញ្ចូលទំនិញ</h3>
         <input type="text" id="inSearch" placeholder="ស្វែងរកទំនិញ..." autocomplete="off" onkeyup="doSearch('in')">
@@ -184,7 +155,6 @@
         <button class="btn-add" onclick="addItem('in')">+ បន្ថែមក្នុងបញ្ជី</button>
         <div id="inCart"></div>
     </div>
-    
     <div class="card">
         <h3>📷 រូបភាពភស្តុតាង</h3>
         <input type="file" id="inPhoto" accept="image/*" multiple>
@@ -194,7 +164,7 @@
     </div>
 </div>
 
-<!-- ==================== PAGE 2: STOCK OUT ==================== -->
+<!-- PAGE STOCK OUT -->
 <div id="page-out" class="page">
     <div class="card">
         <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
@@ -202,10 +172,9 @@
         <input type="date" id="outDate">
         <label>🏢 ដេប៉ូ</label>
         <select id="outDepot"></select>
-        <label>🗺️ តំបន់/BOQ</label>
+        <label>🗺️ BOQ/តំបន់</label>
         <select id="outZone"></select>
     </div>
-    
     <div class="card">
         <h3>📦 ដកទំនិញ</h3>
         <input type="text" id="outSearch" placeholder="ស្វែងរកទំនិញ..." autocomplete="off" onkeyup="doSearch('out')">
@@ -214,7 +183,6 @@
         <button class="btn-add" onclick="addItem('out')">+ បន្ថែមក្នុងបញ្ជី</button>
         <div id="outCart"></div>
     </div>
-    
     <div class="card">
         <h3>📷 រូបភាពភស្តុតាង</h3>
         <input type="file" id="outPhoto" accept="image/*" multiple>
@@ -224,19 +192,18 @@
     </div>
 </div>
 
-<!-- ==================== PAGE 3: ASK AI (GEMINI) ==================== -->
+<!-- PAGE ASK AI -->
 <div id="page-ai" class="page">
     <div class="card">
         <h3>🤖 សួរ AI (Gemini)</h3>
-        <label>សួរសំណួរអំពីស្តុក ឬសំណង់</label>
         <textarea id="aiQuestion" placeholder="ឧទាហរណ៍៖ តើត្រូវការដែកប៉ុន្មានសម្រាប់ផ្ទះ ១០០ម៉ែត្រការ៉េ?"></textarea>
-        <button id="askAiBtn" onclick="askGemini()">✨ សួរ AI</button>
+        <button onclick="askGemini()">✨ សួរ AI</button>
         <div id="aiResponse" class="ai-response" style="display:none;"></div>
         <div id="aiLoading" class="loading">🤔 AI កំពុងគិត...</div>
     </div>
 </div>
 
-<!-- ==================== PAGE 4: CHECK BOQ ==================== -->
+<!-- PAGE CHECK BOQ -->
 <div id="page-boq" class="page">
     <div class="card">
         <h3>📊 ពិនិត្យ BOQ</h3>
@@ -249,7 +216,7 @@
         </select>
         <div id="customBoq" style="display:none;">
             <label>បញ្ចូលបញ្ជីទំនិញ (JSON)</label>
-            <textarea id="customItems" placeholder='[{"name":"ដែក","qty":100},{"name":"ស៊ីម៉ង់ត៍","qty":50}]'></textarea>
+            <textarea id="customItems" placeholder='[{"name":"ដែក","required":100},{"name":"ស៊ីម៉ង់ត៍","required":50}]'></textarea>
         </div>
         <button onclick="checkBOQ()">🔍 ពិនិត្យ BOQ</button>
         <div id="boqResult" class="boq-result" style="display:none;"></div>
@@ -261,353 +228,200 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.MainButton.hide();
-    
-    // Configuration
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_XXXXX/exec"; // 👈 ប្តូរតាម URL របស់អ្នក
-    
-    // Global variables
-    let db = { items: [], depots: [], zones: [] };
+
+    // ========== 🔧 កែ URL នេះតាម Apps Script URL របស់អ្នក ==========
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcYz158_G0yvWpv_PLMDOtCVI-iUUVmshh6N-YngpoU8jSXKff_tRmpj0Anqwa-vGa/exec"; // 👈 ប្តូរទីនេះ!
+    // ==================================================================
+
+    let db = { items: [], depots: [], boqList: [], depotBoqMap: {} };
     let carts = { in: [], out: [] };
     let selectedItems = { in: null, out: null };
     let selectedFiles = { in: [], out: [] };
-    
-    // ==================== INITIALIZATION ====================
+
+    document.getElementById('inDate').valueAsDate = new Date();
+    document.getElementById('outDate').valueAsDate = new Date();
+
     async function init() {
-        document.getElementById('inDate').valueAsDate = new Date();
-        document.getElementById('outDate').valueAsDate = new Date();
-        
         try {
             const res = await fetch(SCRIPT_URL + "?action=getData");
             const data = await res.json();
             db.items = data.items || [];
-            db.depots = data.depots || ['ដេប៉ូកណ្តាល', 'ដេប៉ូរុងរក្សា'];
-            db.zones = data.zones || ['Building A1', 'Building B1', 'BOQ1', 'BOQ2'];
-            
+            db.depots = data.depots || [];
+            db.boqList = data.boqList || [];
+            db.depotBoqMap = data.depotBoqMap || {};
             populateSelect('inDepot', db.depots);
             populateSelect('outDepot', db.depots);
-            populateSelect('inZone', db.zones);
-            populateSelect('outZone', db.zones);
-            populateSelect('boqType', ['house_100', 'house_150', 'office', 'custom']);
-        } catch(e) {
-            console.error("Init error:", e);
-            // Fallback data
-            db.items = [
-                { id: 1, code: "ST-004", name: "ដែកសំខែ ១០០៨", unit: "ពោន" },
-                { id: 2, code: "ST-005", name: "ដែកសំខែ ១៥០៨", unit: "ពោន" },
-                { id: 3, code: "ST-006", name: "ដែកកង ៦០៨", unit: "គិច្ចាកា" },
-                { id: 4, code: "ST-008", name: "ថ្ម ១២២", unit: "ដែម្រតុប" }
-            ];
-            populateSelect('inDepot', ['ដេប៉ូកណ្តាល', 'ដេប៉ូរុងរក្សា']);
-            populateSelect('outDepot', ['ដេប៉ូកណ្តាល', 'ដេប៉ូរុងរក្សា']);
-            populateSelect('inZone', ['Building A1', 'Building B1']);
-            populateSelect('outZone', ['Building A1', 'Building B1']);
-        }
+            // BOQ will be updated when depot changes
+            document.getElementById('inDepot').addEventListener('change', () => updateZoneDropdown('in'));
+            document.getElementById('outDepot').addEventListener('change', () => updateZoneDropdown('out'));
+            updateZoneDropdown('in');
+            updateZoneDropdown('out');
+        } catch(e) { console.error(e); }
     }
-    
+
     function populateSelect(id, options) {
         const select = document.getElementById(id);
         if(!select) return;
         select.innerHTML = '<option value="">ជ្រើសរើស...</option>';
         options.forEach(opt => select.add(new Option(opt, opt)));
     }
-    
-    // ==================== PAGE SWITCH ====================
+
+    function updateZoneDropdown(type) {
+        const depot = document.getElementById(`${type}Depot`).value;
+        const zoneSelect = document.getElementById(`${type}Zone`);
+        let zones = [];
+        if (depot && db.depotBoqMap[depot]) zones = db.depotBoqMap[depot];
+        else zones = db.boqList;
+        zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
+        zones.forEach(z => zoneSelect.add(new Option(z, z)));
+    }
+
     function switchPage(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
-        
-        if(page === 'in') document.querySelector('.nav-item:nth-child(1)').classList.add('active');
-        else if(page === 'out') document.querySelector('.nav-item:nth-child(2)').classList.add('active');
-        else if(page === 'ai') document.querySelector('.nav-item:nth-child(3)').classList.add('active');
-        else if(page === 'boq') document.querySelector('.nav-item:nth-child(4)').classList.add('active');
+        const idx = {in:0, out:1, ai:2, boq:3}[page];
+        if(idx !== undefined) document.querySelectorAll('.nav-item')[idx].classList.add('active');
     }
-    
-    // ==================== SEARCH PRODUCTS ====================
+
     function doSearch(type) {
         const keyword = document.getElementById(`${type}Search`).value.toLowerCase().trim();
         const resBox = document.getElementById(`${type}Res`);
-        
-        if(keyword.length < 1) {
-            resBox.style.display = 'none';
-            resBox.innerHTML = '';
-            return;
-        }
-        
-        const matched = db.items.filter(item => 
-            item.name.toLowerCase().includes(keyword) || 
-            (item.code && item.code.toLowerCase().includes(keyword))
-        );
-        
+        if(keyword.length < 1) { resBox.style.display = 'none'; resBox.innerHTML = ''; return; }
+        const matched = db.items.filter(i => i.name.toLowerCase().includes(keyword) || (i.code && i.code.toLowerCase().includes(keyword)));
         resBox.innerHTML = '';
-        matched.slice(0, 8).forEach(item => {
+        matched.slice(0,8).forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `<span style="color:#888">(${item.code})</span>` : ''} ${item.unit ? `<span style="color:#2b7a3e">[${item.unit}]</span>` : ''}`;
-            div.onclick = () => {
-                selectedItems[type] = item;
-                document.getElementById(`${type}Search`).value = item.name;
-                resBox.style.display = 'none';
-            };
+            div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit ? `[${item.unit}]` : ''}`;
+            div.onclick = () => { selectedItems[type] = item; document.getElementById(`${type}Search`).value = item.name; resBox.style.display = 'none'; };
             resBox.appendChild(div);
         });
         resBox.style.display = 'block';
     }
-    
-    // Close search box when clicking outside
+
     document.addEventListener('click', function(e) {
         if(!e.target.closest('.res-box') && !e.target.closest('input[placeholder*="ស្វែងរក"]')) {
             document.querySelectorAll('.res-box').forEach(b => b.style.display = 'none');
         }
     });
-    
-    // ==================== ADD TO CART ====================
+
     function addItem(type) {
         const qty = document.getElementById(`${type}Qty`).value;
         const selected = selectedItems[type];
-        
-        if(!selected) {
-            tg.showAlert("សូមជ្រើសរើសទំនិញ!");
-            return;
-        }
-        if(!qty || parseInt(qty) <= 0) {
-            tg.showAlert("សូមបញ្ចូលចំនួនឱ្យបានត្រឹមត្រូវ!");
-            return;
-        }
-        
-        const existing = carts[type].find(item => item.id === selected.id);
-        if(existing) {
-            existing.qty += parseInt(qty);
-        } else {
-            carts[type].push({ ...selected, qty: parseInt(qty) });
-        }
-        
+        if(!selected) { tg.showAlert("សូមជ្រើសរើសទំនិញ!"); return; }
+        if(!qty || parseInt(qty) <= 0) { tg.showAlert("សូមបញ្ចូលចំនួន!"); return; }
+        const existing = carts[type].find(i => i.code === selected.code);
+        if(existing) existing.qty += parseInt(qty);
+        else carts[type].push({ ...selected, qty: parseInt(qty) });
         renderCart(type);
         document.getElementById(`${type}Search`).value = '';
         document.getElementById(`${type}Qty`).value = '';
         selectedItems[type] = null;
     }
-    
-    function removeFromCart(type, index) {
-        carts[type].splice(index, 1);
+
+    function removeFromCart(type, idx) {
+        carts[type].splice(idx,1);
         renderCart(type);
     }
-    
+
     function renderCart(type) {
         const container = document.getElementById(`${type}Cart`);
-        if(carts[type].length === 0) {
-            container.innerHTML = '<div class="empty-cart">📭 មិនទាន់មានទំនិញក្នុងបញ្ជី</div>';
-            return;
-        }
-        
+        if(carts[type].length === 0) { container.innerHTML = '<div class="empty-cart">📭 មិនទាន់មានទំនិញ</div>'; return; }
         container.innerHTML = carts[type].map((item, idx) => `
             <div class="cart-item">
                 <span><strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''}</span>
-                <div>
-                    <span class="cart-qty">${item.qty} ${item.unit || ''}</span>
-                    <button class="remove-item" onclick="removeFromCart('${type}', ${idx})">✕</button>
-                </div>
+                <div><span class="cart-qty">${item.qty} ${item.unit||''}</span>
+                <button class="remove-item" onclick="removeFromCart('${type}', ${idx})">✕</button></div>
             </div>
         `).join('');
     }
-    
-    // ==================== IMAGE PREVIEW ====================
+
     function setupImagePreview(type) {
         const input = document.getElementById(`${type}Photo`);
         const preview = document.getElementById(`${type}Preview`);
-        
         input.addEventListener('change', function(e) {
             preview.innerHTML = '';
             selectedFiles[type] = Array.from(e.target.files);
-            
             selectedFiles[type].forEach(file => {
                 const reader = new FileReader();
-                reader.onload = function(ev) {
-                    const img = document.createElement('img');
-                    img.src = ev.target.result;
-                    img.className = 'preview-img';
-                    preview.appendChild(img);
-                };
+                reader.onload = ev => { const img = document.createElement('img'); img.src = ev.target.result; img.className = 'preview-img'; preview.appendChild(img); };
                 reader.readAsDataURL(file);
             });
         });
     }
-    
+
     function filesToBase64(files) {
-        return Promise.all(files.map(file => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }));
+        return Promise.all(files.map(f => new Promise((res,rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(f); })));
     }
-    
-    // ==================== SEND DATA (STOCK IN/OUT) ====================
+
     async function sendData(type) {
-        if(carts[type].length === 0) {
-            tg.showAlert("សូមបន្ថែមទំនិញក្នុងបញ្ជី!");
-            return;
-        }
-        
+        if(carts[type.toLowerCase()].length === 0) { tg.showAlert("សូមបន្ថែមទំនិញក្នុងបញ្ជី!"); return; }
         const date = document.getElementById(`${type.toLowerCase()}Date`).value;
         const depot = document.getElementById(`${type.toLowerCase()}Depot`).value;
         const zone = document.getElementById(`${type.toLowerCase()}Zone`).value;
-        
-        if(!depot || !zone) {
-            tg.showAlert("សូមជ្រើសរើសដេប៉ូ និងតំបន់!");
-            return;
-        }
-        
+        if(!depot || !zone) { tg.showAlert("សូមជ្រើសរើសដេប៉ូ និង BOQ!"); return; }
         const loadingDiv = document.getElementById(`${type.toLowerCase()}Loading`);
-        const submitBtn = event.target;
+        const btn = event.target;
         loadingDiv.style.display = 'block';
-        submitBtn.disabled = true;
-        
+        btn.disabled = true;
         try {
-            let imagesBase64 = [];
-            if(selectedFiles[type.toLowerCase()].length > 0) {
-                imagesBase64 = await filesToBase64(selectedFiles[type.toLowerCase()]);
-            }
-            
-            const payload = {
-                action: 'saveStock',
-                type: type,
-                date: date,
-                depot: depot,
-                zone: zone,
-                items: carts[type].map(item => ({ id: item.id, code: item.code, name: item.name, qty: item.qty, unit: item.unit })),
-                images: imagesBase64,
-                user: tg.initDataUnsafe?.user?.username || tg.initDataUnsafe?.user?.first_name || 'Chantrea'
-            };
-            
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
+            let images = [];
+            if(selectedFiles[type.toLowerCase()].length) images = await filesToBase64(selectedFiles[type.toLowerCase()]);
+            const payload = { action: 'saveStock', type: type, date, depot, zone, items: carts[type.toLowerCase()], images, user: tg.initDataUnsafe?.user?.username || tg.initDataUnsafe?.user?.first_name || 'Chantrea' };
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             tg.showAlert(`✅ ${type === 'IN' ? 'បញ្ចូល' : 'ដក'}ស្តុកបានជោគជ័យ!`);
-            
-            // Clear cart
             carts[type.toLowerCase()] = [];
             renderCart(type.toLowerCase());
             selectedFiles[type.toLowerCase()] = [];
             document.getElementById(`${type.toLowerCase()}Preview`).innerHTML = '';
             document.getElementById(`${type.toLowerCase()}Photo`).value = '';
-            
-        } catch(error) {
-            tg.showAlert("❌ មានបញ្ហា: " + error.message);
-        } finally {
-            loadingDiv.style.display = 'none';
-            submitBtn.disabled = false;
-        }
+        } catch(e) { tg.showAlert("❌ កំហុស: "+e.message); }
+        finally { loadingDiv.style.display = 'none'; btn.disabled = false; }
     }
-    
-    // ==================== ASK GEMINI AI ====================
+
     async function askGemini() {
-        const question = document.getElementById('aiQuestion').value.trim();
-        if(!question) {
-            tg.showAlert("សូមបញ្ចូលសំណួរ!");
-            return;
-        }
-        
-        const loadingDiv = document.getElementById('aiLoading');
-        const responseDiv = document.getElementById('aiResponse');
-        const askBtn = document.getElementById('askAiBtn');
-        
-        loadingDiv.style.display = 'block';
-        responseDiv.style.display = 'none';
-        askBtn.disabled = true;
-        
+        const q = document.getElementById('aiQuestion').value.trim();
+        if(!q) { tg.showAlert("សូមបញ្ចូលសំណួរ!"); return; }
+        document.getElementById('aiLoading').style.display = 'block';
+        document.getElementById('aiResponse').style.display = 'none';
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'askGemini',
-                    question: question
-                })
-            });
-            
+            const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'askGemini', question: q }) });
             const data = await res.json();
-            responseDiv.innerHTML = data.answer || "សូមអភ័យទោស មិនអាចទទួលបានចម្លើយទេ។";
-            responseDiv.style.display = 'block';
-            
-        } catch(error) {
-            responseDiv.innerHTML = "❌ កំហុស: " + error.message;
-            responseDiv.style.display = 'block';
-        } finally {
-            loadingDiv.style.display = 'none';
-            askBtn.disabled = false;
-        }
+            const answerDiv = document.getElementById('aiResponse');
+            answerDiv.innerHTML = data.answer || "មិនមានចម្លើយ";
+            answerDiv.style.display = 'block';
+        } catch(e) { document.getElementById('aiResponse').innerHTML = "កំហុស: "+e.message; document.getElementById('aiResponse').style.display = 'block'; }
+        finally { document.getElementById('aiLoading').style.display = 'none'; }
     }
-    
-    // ==================== CHECK BOQ ====================
+
     async function checkBOQ() {
         const boqType = document.getElementById('boqType').value;
-        const loadingDiv = document.getElementById('boqLoading');
-        const resultDiv = document.getElementById('boqResult');
-        
-        loadingDiv.style.display = 'block';
-        resultDiv.style.display = 'none';
-        
+        const custom = boqType === 'custom' ? document.getElementById('customItems').value : null;
+        document.getElementById('boqLoading').style.display = 'block';
+        document.getElementById('boqResult').style.display = 'none';
         try {
-            const res = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'checkBOQ',
-                    boqType: boqType,
-                    customItems: boqType === 'custom' ? document.getElementById('customItems').value : null
-                })
-            });
-            
+            const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'checkBOQ', boqType, customItems: custom }) });
             const data = await res.json();
-            
-            let html = '<strong>📋 លទ្ធផលពិនិត្យ BOQ</strong><br><br>';
-            if(data.boq && data.boq.length > 0) {
-                html += '<table style="width:100%; border-collapse:collapse;">';
-                html += '<tr style="background:#2b7a3e; color:white;"><th style="padding:8px;">ទំនិញ</th><th>បរិមាណត្រូវការ</th><th>ស្តុកបច្ចុប្បន្ន</th><th>ស្ថានភាព</th></tr>';
-                data.boq.forEach(item => {
-                    const status = item.currentStock >= item.required ? '✅ គ្រប់គ្រាន់' : '⚠️ ខ្វះ';
-                    const statusColor = item.currentStock >= item.required ? '#2b7a3e' : '#c0392b';
-                    html += `<tr style="border-bottom:1px solid #ddd;">
-                        <td style="padding:8px;">${item.name}</td>
-                        <td style="padding:8px;">${item.required}</td>
-                        <td style="padding:8px;">${item.currentStock || 0}</td>
-                        <td style="padding:8px; color:${statusColor};">${status}</td>
-                    </tr>`;
-                });
-                html += '</table>';
-            } else {
-                html += '<p>មិនមានទិន្នន័យ BOQ</p>';
-            }
-            
-            resultDiv.innerHTML = html;
-            resultDiv.style.display = 'block';
-            
-        } catch(error) {
-            resultDiv.innerHTML = "❌ កំហុស: " + error.message;
-            resultDiv.style.display = 'block';
-        } finally {
-            loadingDiv.style.display = 'none';
-        }
+            let html = '<strong>📋 លទ្ធផល BOQ</strong><br><br><table style="width:100%; border-collapse:collapse;"><tr style="background:#2b7a3e; color:white;"><th>ទំនិញ</th><th>ត្រូវការ</th><th>ស្តុកមាន</th><th>ស្ថានភាព</th></table>';
+            (data.boq || []).forEach(item => {
+                const status = item.currentStock >= item.required ? '✅ គ្រប់' : '⚠️ ខ្វះ';
+                const color = item.currentStock >= item.required ? '#2b7a3e' : '#c0392b';
+                html += `<tr><td>${item.name}</td><td>${item.required} ${item.unit}</td><td>${item.currentStock} ${item.unit}</td><td style="color:${color}">${status}</td></tr>`;
+            });
+            html += '</table>';
+            document.getElementById('boqResult').innerHTML = html;
+            document.getElementById('boqResult').style.display = 'block';
+        } catch(e) { document.getElementById('boqResult').innerHTML = "កំហុស: "+e.message; document.getElementById('boqResult').style.display = 'block'; }
+        finally { document.getElementById('boqLoading').style.display = 'none'; }
     }
-    
-    // Show/hide custom BOQ input
+
     document.getElementById('boqType').addEventListener('change', function() {
-        const customDiv = document.getElementById('customBoq');
-        customDiv.style.display = this.value === 'custom' ? 'block' : 'none';
+        document.getElementById('customBoq').style.display = this.value === 'custom' ? 'block' : 'none';
     });
-    
-    // Setup image previews
+
     setupImagePreview('in');
     setupImagePreview('out');
-    
-    // Initialize
     init();
 </script>
 </body>
