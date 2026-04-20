@@ -174,7 +174,7 @@
         stockOut: [],
         balance: [],
         boq: [],
-        items: []      // for product search in stock forms
+        items: []
     };
     let currentUser = { id: null, name: "Guest" };
     let carts = { in: [], out: [] };
@@ -197,7 +197,7 @@
             appData.stockOut = data.stockOut || [];
             appData.balance = data.balance || [];
             appData.boq = data.boq || [];
-            appData.items = data.items || [];      // for product search
+            appData.items = data.items || [];
             depotsList = data.depots || [];
             zonesList = data.zones || [];
             depotZoneMap = data.depotZoneMap || {};
@@ -239,7 +239,6 @@
             container.innerHTML = '<div class="empty-cart">គ្មានកំណត់ត្រា</div>';
             return;
         }
-        // show only last 20 records
         const recent = data.slice(-20);
         const headers = Object.keys(recent[0]);
         let html = '<div class="table-wrapper"><table><thead><tr>';
@@ -254,177 +253,6 @@
         container.innerHTML = html;
     }
 
-function initForms() {
-    ['in', 'out'].forEach(type => {
-        const depotSelect = document.getElementById(`${type}-depot`);
-        const zoneSelect = document.getElementById(`${type}-zone`);
-
-        // 1. ដេប៉ូ dropdown
-        if (depotSelect) {
-            depotsList.forEach(d => depotSelect.add(new Option(d, d)));
-            // លុបការច្រោះ BOQ តាមដេប៉ូចេញ (មិនភ្ជាប់ event)
-        }
-
-        // 2. BOQ dropdown - បង្ហាញទាំងអស់ពី zonesList
-        zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
-        zonesList.forEach(z => zoneSelect.add(new Option(z, z)));
-
-        // 3. កំណត់កាលបរិច្ឆេទបច្ចុប្បន្ន
-        document.getElementById(`${type}-date`).valueAsDate = new Date();
-
-        // 4. ស្វែងរកទំនិញ
-        const searchInput = document.getElementById(`${type}-search`);
-        const resultsDiv = document.getElementById(`${type}-results`);
-        if (searchInput && resultsDiv) {
-            searchInput.addEventListener('input', () => {
-                const kw = searchInput.value.toLowerCase();
-                if (kw.length < 2) {
-                    resultsDiv.style.display = 'none';
-                    return;
-                }
-                const matches = appData.items.filter(i =>
-                    (i.name && i.name.toLowerCase().includes(kw)) ||
-                    (i.code && i.code.toLowerCase().includes(kw))
-                );
-                resultsDiv.innerHTML = '';
-                matches.slice(0, 10).forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'item-row';
-                    div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
-                    div.onclick = () => {
-                        selectedItems[type] = item;
-                        searchInput.value = item.name;
-                        resultsDiv.style.display = 'none';
-                    };
-                    resultsDiv.appendChild(div);
-                });
-                resultsDiv.style.display = matches.length ? 'block' : 'none';
-            });
-            // បិទស្វែងរកពេលចុចក្រៅ
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-                    resultsDiv.style.display = 'none';
-                }
-            });
-        }
-
-        // 5. ប៊ូតុងបន្ថែមទៅកន្ត្រក
-        const addBtn = document.getElementById(`${type}-add`);
-        if (addBtn) {
-            addBtn.onclick = () => {
-                const qty = parseInt(document.getElementById(`${type}-qty`).value);
-                const item = selectedItems[type];
-                if (!item) return showAlert('ជ្រើសរើសទំនិញ');
-                if (!qty || qty <= 0) return showAlert('បញ្ចូលចំនួន');
-                const existing = carts[type].find(i => i.code === item.code);
-                if (existing) existing.qty += qty;
-                else carts[type].push({ ...item, qty });
-                renderCart(type);
-                searchInput.value = '';
-                document.getElementById(`${type}-qty`).value = '';
-                selectedItems[type] = null;
-                showAlert(`បានបន្ថែម ${item.name} ${qty}`);
-            };
-        }
-
-        // 6. រូបភាព preview
-        const photoInput = document.getElementById(`${type}-photo`);
-        const previewDiv = document.getElementById(`${type}-preview`);
-        if (photoInput) {
-            photoInput.addEventListener('change', () => {
-                previewDiv.innerHTML = '';
-                selectedFiles[type] = Array.from(photoInput.files);
-                selectedFiles[type].forEach(f => {
-                    const reader = new FileReader();
-                    reader.onload = e => {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.className = 'preview-img';
-                        previewDiv.appendChild(img);
-                    };
-                    reader.readAsDataURL(f);
-                });
-            });
-        }
-
-        // 7. ប៊ូតុង submit (ដាច់ដោយឡែក មិនចាំបាច់នៅទីនេះទេ)
-    });
-}
-                depotSelect.dispatchEvent(new Event('change'));
-            }
-            document.getElementById(`${type}-date`).valueAsDate = new Date();
-            
-            // Search
-            const searchInput = document.getElementById(`${type}-search`);
-            const resultsDiv = document.getElementById(`${type}-results`);
-            if (searchInput) {
-                searchInput.addEventListener('input', () => {
-                    const kw = searchInput.value.toLowerCase();
-                    if (kw.length < 2) { resultsDiv.style.display = 'none'; return; }
-                    const matches = appData.items.filter(i => 
-                        (i.name && i.name.toLowerCase().includes(kw)) || 
-                        (i.code && i.code.toLowerCase().includes(kw))
-                    );
-                    resultsDiv.innerHTML = '';
-                    matches.forEach(i => {
-                        const div = document.createElement('div');
-                        div.className = 'item-row';
-                        div.innerHTML = `<strong>${i.name}</strong> ${i.code ? `(${i.code})` : ''} ${i.unit || ''}`;
-                        div.onclick = () => {
-                            selectedItems[type] = i;
-                            searchInput.value = i.name;
-                            resultsDiv.style.display = 'none';
-                        };
-                        resultsDiv.appendChild(div);
-                    });
-                    resultsDiv.style.display = matches.length ? 'block' : 'none';
-                });
-                document.addEventListener('click', (e) => {
-                    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) resultsDiv.style.display = 'none';
-                });
-            }
-            
-            // Add to cart
-            document.getElementById(`${type}-add`)?.addEventListener('click', () => {
-                const qty = parseInt(document.getElementById(`${type}-qty`).value);
-                const item = selectedItems[type];
-                if (!item) return showAlert('ជ្រើសទំនិញ');
-                if (!qty || qty <= 0) return showAlert('បញ្ចូលចំនួន');
-                const existing = carts[type].find(i => i.code === item.code);
-                if (existing) existing.qty += qty;
-                else carts[type].push({ ...item, qty });
-                renderCart(type);
-                searchInput.value = '';
-                document.getElementById(`${type}-qty`).value = '';
-                selectedItems[type] = null;
-                showAlert(`បានបន្ថែម ${item.name} ${qty}`);
-            });
-            
-            // Image preview
-            const photoInput = document.getElementById(`${type}-photo`);
-            const previewDiv = document.getElementById(`${type}-preview`);
-            if (photoInput) {
-                photoInput.addEventListener('change', () => {
-                    previewDiv.innerHTML = '';
-                    selectedFiles[type] = Array.from(photoInput.files);
-                    selectedFiles[type].forEach(f => {
-                        const reader = new FileReader();
-                        reader.onload = e => {
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.className = 'preview-img';
-                            previewDiv.appendChild(img);
-                        };
-                        reader.readAsDataURL(f);
-                    });
-                });
-            }
-            
-            // Submit
-            document.getElementById(`${type}-submit`)?.addEventListener('click', () => submitStock(type));
-        });
-    }
-    
     function renderCart(type) {
         const container = document.getElementById(`${type}-cart`);
         if (!container) return;
@@ -447,7 +275,7 @@ function initForms() {
             });
         });
     }
-    
+
     async function filesToBase64(files) {
         return Promise.all(files.map(f => new Promise((res, rej) => {
             const r = new FileReader();
@@ -456,7 +284,7 @@ function initForms() {
             r.readAsDataURL(f);
         })));
     }
-    
+
     async function submitStock(type) {
         if (carts[type].length === 0) return showAlert('បន្ថែមទំនិញ');
         const date = document.getElementById(`${type}-date`).value;
@@ -486,22 +314,125 @@ function initForms() {
                 selectedFiles[type] = [];
                 document.getElementById(`${type}-preview`).innerHTML = '';
                 document.getElementById(`${type}-photo`).value = '';
-                // Refresh logs
                 await fetchAllData();
             } else showAlert('បរាជ័យ: ' + result.message);
         } catch(e) { showAlert('កំហុស: ' + e.message); }
         finally { loading.style.display = 'none'; btn.disabled = false; }
     }
-    
+
+    function initForms() {
+        ['in', 'out'].forEach(type => {
+            const depotSelect = document.getElementById(`${type}-depot`);
+            const zoneSelect = document.getElementById(`${type}-zone`);
+            const searchInput = document.getElementById(`${type}-search`);
+            const resultsDiv = document.getElementById(`${type}-results`);
+            const addBtn = document.getElementById(`${type}-add`);
+            const photoInput = document.getElementById(`${type}-photo`);
+            const previewDiv = document.getElementById(`${type}-preview`);
+
+            // 1. Depot dropdown
+            if (depotSelect && depotsList.length) {
+                depotsList.forEach(d => depotSelect.add(new Option(d, d)));
+            }
+
+            // 2. BOQ dropdown - show all zones (not filtered by depot)
+            if (zoneSelect && zonesList.length) {
+                zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
+                zonesList.forEach(z => zoneSelect.add(new Option(z, z)));
+            }
+
+            // 3. Date
+            const dateInput = document.getElementById(`${type}-date`);
+            if (dateInput) dateInput.valueAsDate = new Date();
+
+            // 4. Search products
+            if (searchInput && resultsDiv) {
+                searchInput.addEventListener('input', () => {
+                    const kw = searchInput.value.toLowerCase();
+                    if (kw.length < 2) {
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
+                    const matches = appData.items.filter(i =>
+                        (i.name && i.name.toLowerCase().includes(kw)) ||
+                        (i.code && i.code.toLowerCase().includes(kw))
+                    );
+                    resultsDiv.innerHTML = '';
+                    matches.slice(0, 10).forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'item-row';
+                        div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
+                        div.onclick = () => {
+                            selectedItems[type] = item;
+                            searchInput.value = item.name;
+                            resultsDiv.style.display = 'none';
+                        };
+                        resultsDiv.appendChild(div);
+                    });
+                    resultsDiv.style.display = matches.length ? 'block' : 'none';
+                });
+                document.addEventListener('click', (e) => {
+                    if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                        resultsDiv.style.display = 'none';
+                    }
+                });
+            }
+
+            // 5. Add to cart button
+            if (addBtn) {
+                addBtn.onclick = () => {
+                    const qty = parseInt(document.getElementById(`${type}-qty`).value);
+                    const item = selectedItems[type];
+                    if (!item) return showAlert('ជ្រើសរើសទំនិញ');
+                    if (!qty || qty <= 0) return showAlert('បញ្ចូលចំនួន');
+                    const existing = carts[type].find(i => i.code === item.code);
+                    if (existing) existing.qty += qty;
+                    else carts[type].push({ ...item, qty });
+                    renderCart(type);
+                    if (searchInput) searchInput.value = '';
+                    const qtyInput = document.getElementById(`${type}-qty`);
+                    if (qtyInput) qtyInput.value = '';
+                    selectedItems[type] = null;
+                    showAlert(`បានបន្ថែម ${item.name} ${qty}`);
+                };
+            }
+
+            // 6. Image preview
+            if (photoInput && previewDiv) {
+                photoInput.addEventListener('change', () => {
+                    previewDiv.innerHTML = '';
+                    selectedFiles[type] = Array.from(photoInput.files);
+                    selectedFiles[type].forEach(f => {
+                        const reader = new FileReader();
+                        reader.onload = e => {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.className = 'preview-img';
+                            previewDiv.appendChild(img);
+                        };
+                        reader.readAsDataURL(f);
+                    });
+                });
+            }
+
+            // 7. Submit button (already attached via onclick in createPages? but we'll add here too)
+            const submitBtn = document.getElementById(`${type}-submit`);
+            if (submitBtn) {
+                submitBtn.onclick = () => submitStock(type);
+            }
+        });
+    }
+
     function switchPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(`page-${pageId}`).classList.add('active');
+        const target = document.getElementById(`page-${pageId}`);
+        if (target) target.classList.add('active');
         document.querySelectorAll('.nav-item').forEach(nav => {
             nav.classList.remove('active');
             if (nav.dataset.page === pageId) nav.classList.add('active');
         });
     }
-    
+
     function createPages() {
         const container = document.getElementById('pages-container');
         container.innerHTML = '';
@@ -520,7 +451,7 @@ function initForms() {
             if (page.hasForm) {
                 div.innerHTML = `
                     <div class="card">
-                        <h3>${page.title === '📥 STOCK IN' ? '➕ បញ្ចូលស្តុកថ្មី' : '➖ ដកស្តុកថ្មី'}</h3>
+                        <h3>${page.id === 'stock_in' ? '➕ បញ្ចូលស្តុកថ្មី' : '➖ ដកស្តុកថ្មី'}</h3>
                         <label>📅 ថ្ងៃខែ</label>
                         <input type="date" id="${page.type}-date">
                         <label>🏢 ដេប៉ូ</label>
@@ -551,12 +482,11 @@ function initForms() {
             container.appendChild(div);
         });
         
-        // Add navigation listeners
         document.querySelectorAll('.nav-item').forEach(nav => {
             nav.addEventListener('click', () => switchPage(nav.dataset.page));
         });
     }
-    
+
     createPages();
     fetchAllData();
 </script>
