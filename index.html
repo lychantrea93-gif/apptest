@@ -260,11 +260,12 @@
             const zoneSelect = document.getElementById(`${type}-zone`);
             if (depotSelect) {
                 depotsList.forEach(d => depotSelect.add(new Option(d, d)));
-                depotSelect.addEventListener('change', () => {
-                    const zones = depotZoneMap[depotSelect.value] || zonesList;
-                    zoneSelect.innerHTML = '<option value="">ជ្រើស BOQ...</option>';
-                    zones.forEach(z => zoneSelect.add(new Option(z, z)));
-                });
+           depotSelect.addEventListener('change', () => {
+    // បង្ហាញ BOQ ទាំងអស់ មិនច្រោះតាមដេប៉ូ
+    const zones = zonesList;
+    zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
+    zones.forEach(z => zoneSelect.add(new Option(z, z)));
+});
                 depotSelect.dispatchEvent(new Event('change'));
             }
             document.getElementById(`${type}-date`).valueAsDate = new Date();
