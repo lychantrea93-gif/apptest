@@ -204,14 +204,15 @@
             appData.stockOut = data.stockOut || [];
             appData.balance = data.balance || [];
             appData.boq = data.boq || [];
+            // NOTE: items from Apps Script use keys: item_code, item_name, unit (from header conversion)
             appData.items = data.items || [];
             depotsList = data.depots || [];
             zonesList = data.zones || [];
             depotZoneMap = data.depotZoneMap || {};
             
             console.log("Items loaded:", appData.items.length);
-            if (appData.items.length === 0) {
-                console.warn("No items found! Check Apps Script 'items' response.");
+            if (appData.items.length > 0) {
+                console.log("Sample item:", appData.items[0]);
             }
             
             renderTable('balance', appData.balance);
@@ -233,7 +234,7 @@
             return;
         }
         const headers = Object.keys(data[0]);
-        let html = '<div class="table-wrapper"><table><thead><tr>';
+        let html = '<div class="table-wrapper"><tr><thead><tr>';
         headers.forEach(h => html += `<th>${h}</th>`);
         html += '</tr></thead><tbody>';
         data.forEach(row => {
@@ -354,7 +355,7 @@
             const dateInput = document.getElementById(`${type}-date`);
             if (dateInput) dateInput.valueAsDate = new Date();
             
-            // Setup search
+            // Setup search - FIXED: using correct property names from Apps Script
             const searchInput = document.getElementById(`${type}-search`);
             const resultsDiv = document.getElementById(`${type}-results`);
             if (searchInput && resultsDiv) {
@@ -369,15 +370,16 @@
                 
                 finalSearch.addEventListener('input', (e) => {
                     const kw = e.target.value.toLowerCase().trim();
-                    console.log(`Searching ${type}: "${kw}"`);
+                    console.log(`Searching in ${type}: "${kw}"`);
                     if (kw.length < 2) {
                         finalResults.style.display = 'none';
                         finalResults.innerHTML = '';
                         return;
                     }
+                    // *** FIX: use item_name and item_code (from Apps Script) ***
                     const matches = appData.items.filter(item => 
-                        (item.name && item.name.toLowerCase().includes(kw)) ||
-                        (item.code && item.code.toLowerCase().includes(kw))
+                        (item.item_name && item.item_name.toLowerCase().includes(kw)) ||
+                        (item.item_code && item.item_code.toLowerCase().includes(kw))
                     );
                     console.log(`Found ${matches.length} matches`);
                     finalResults.innerHTML = '';
@@ -390,12 +392,17 @@
                         matches.slice(0, 15).forEach(item => {
                             const div = document.createElement('div');
                             div.className = 'item-row';
-                            div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit || ''}`;
+                            div.innerHTML = `<strong>${item.item_name}</strong> ${item.item_code ? `(${item.item_code})` : ''} ${item.unit || ''}`;
                             div.onclick = () => {
-                                selectedItems[type] = item;
-                                finalSearch.value = item.name;
+                                // Store selected item with consistent naming for cart
+                                selectedItems[type] = {
+                                    code: item.item_code,
+                                    name: item.item_name,
+                                    unit: item.unit
+                                };
+                                finalSearch.value = item.item_name;
                                 finalResults.style.display = 'none';
-                                console.log(`Selected: ${item.name}`);
+                                console.log(`Selected: ${item.item_name}`);
                             };
                             finalResults.appendChild(div);
                         });
