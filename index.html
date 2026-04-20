@@ -6,285 +6,208 @@
     <title>Stock App - Chantrea</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 80px; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .nav-item { text-align: center; padding: 8px 12px; border-radius: 30px; cursor: pointer; flex: 1; margin: 0 4px; }
-        .nav-item.active { background: #2b7a3e; color: white; }
-        .nav-item .icon { font-size: 24px; display: block; }
-        .nav-item .label { font-size: 11px; margin-top: 4px; }
-        .page { display: none; padding: 12px; }
-        .page.active { display: block; }
-        .card { background: white; margin: 12px 0; padding: 16px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        h3 { margin: 0 0 12px 0; font-size: 16px; color: #1a1a2e; }
-        label { font-size: 12px; font-weight: 500; color: #6c757d; display: block; margin-top: 12px; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #dee2e6; border-radius: 12px; font-size: 14px; }
-        button { background: #2b7a3e; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; margin-top: 16px; width: 100%; cursor: pointer; font-size: 16px; }
-        button.btn-out { background: #c0392b; }
-        .res-box { border: 1px solid #ddd; max-height: 200px; overflow-y: auto; background: white; border-radius: 12px; margin-top: 5px; display: none; position: absolute; width: calc(100% - 32px); z-index: 50; }
-        .item-row { padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
-        .item-row:hover { background: #e8f5e9; }
-        .cart-item { background: #f8f9fa; padding: 8px 12px; margin: 6px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .cart-qty { background: #2b7a3e; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px; }
-        .remove-item { background: none; border: none; color: #c0392b; font-size: 18px; cursor: pointer; }
-        .empty-cart { color: #adb5bd; text-align: center; padding: 16px; font-size: 13px; }
-        .loading { display: none; text-align: center; padding: 12px; color: #2b7a3e; }
-        .photo-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-        .preview-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
-        .error-log { background: #ffebee; color: #c0392b; padding: 8px; border-radius: 8px; margin-top: 10px; display: none; font-size: 12px; }
+        *{box-sizing:border-box}body{font-family:system-ui, -apple-system; background:#f0f2f5; margin:0; padding-bottom:70px}
+        .bottom-nav{position:fixed; bottom:0; left:0; right:0; background:white; display:flex; box-shadow:0 -2px 10px rgba(0,0,0,0.1); z-index:100}
+        .nav-item{flex:1; text-align:center; padding:10px 0; cursor:pointer}
+        .nav-item.active{background:#2b7a3e; color:white}
+        .page{display:none; padding:12px}
+        .page.active{display:block}
+        .card{background:white; margin:12px 0; padding:16px; border-radius:16px}
+        input,select,textarea{width:100%; padding:12px; border:1px solid #ddd; border-radius:12px; margin-top:5px}
+        button{width:100%; padding:14px; background:#2b7a3e; color:white; border:none; border-radius:12px; font-weight:bold; margin-top:16px; cursor:pointer}
+        .btn-out{background:#c0392b}
+        .res-box{position:absolute; background:white; border:1px solid #ddd; max-height:200px; overflow-y:auto; display:none; width:calc(100% - 32px); z-index:50}
+        .item-row{padding:10px; border-bottom:1px solid #eee; cursor:pointer}
+        .cart-item{background:#f8f9fa; padding:8px 12px; margin:6px 0; border-radius:10px; display:flex; justify-content:space-between}
+        .cart-qty{background:#2b7a3e; color:white; padding:2px 10px; border-radius:20px}
+        .remove-item{background:none; border:none; color:#c0392b; font-size:18px; cursor:pointer}
+        .empty-cart{color:#aaa; text-align:center; padding:16px}
+        .loading{display:none; text-align:center; padding:12px; color:#2b7a3e}
+        .photo-preview{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+        .preview-img{width:60px; height:60px; object-fit:cover; border-radius:8px}
     </style>
 </head>
 <body>
-
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="switchPage('in')"><div class="icon">📥</div><div class="label">STOCK IN</div></div>
-    <div class="nav-item" onclick="switchPage('out')"><div class="icon">📤</div><div class="label">STOCK OUT</div></div>
+    <div class="nav-item active" onclick="switchPage('in')">📥 STOCK IN</div>
+    <div class="nav-item" onclick="switchPage('out')">📤 STOCK OUT</div>
 </div>
-
-<!-- STOCK IN PAGE -->
 <div id="page-in" class="page active">
-    <div class="card">
-        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
-        <label>📅 ថ្ងៃខែ</label>
-        <input type="date" id="inDate">
-        <label>🏢 ដេប៉ូ</label>
-        <select id="inDepot"></select>
-        <label>🗺️ BOQ/តំបន់</label>
-        <select id="inZone"></select>
+    <div class="card"><h3>📍 ព័ត៌មាន</h3>
+        <label>📅 ថ្ងៃខែ</label><input type="date" id="inDate">
+        <label>🏢 ដេប៉ូ</label><select id="inDepot"></select>
+        <label>🗺️ BOQ</label><select id="inZone"></select>
     </div>
-    <div class="card">
-        <h3>📦 បញ្ចូលទំនិញ</h3>
-        <input type="text" id="inSearch" placeholder="ស្វែងរកទំនិញ..." autocomplete="off" onkeyup="doSearch('in')">
+    <div class="card"><h3>📦 បញ្ចូលទំនិញ</h3>
+        <input type="text" id="inSearch" placeholder="ស្វែងរក..." onkeyup="doSearch('in')">
         <div id="inRes" class="res-box"></div>
-        <input type="number" id="inQty" placeholder="ចំនួន (Qty)" min="1">
-        <button onclick="addItem('in')">+ បន្ថែមក្នុងបញ្ជី</button>
+        <input type="number" id="inQty" placeholder="ចំនួន">
+        <button onclick="addItem('in')">+ បន្ថែម</button>
         <div id="inCart"></div>
     </div>
-    <div class="card">
-        <h3>📷 រូបភាពភស្តុតាង</h3>
+    <div class="card"><h3>📷 រូបភាព</h3>
         <input type="file" id="inPhoto" accept="image/*" multiple>
         <div id="inPreview" class="photo-preview"></div>
-        <div id="inLoading" class="loading">⏳ កំពុងដំណើរការ...</div>
-        <button onclick="sendData('IN')">💾 រក្សាទុក STOCK IN</button>
+        <div id="inLoading" class="loading">⏳ កំពុងរក្សាទុក...</div>
+        <button onclick="sendData('IN')">💾 រក្សាទុក IN</button>
     </div>
-    <div id="inError" class="error-log"></div>
 </div>
-
-<!-- STOCK OUT PAGE -->
 <div id="page-out" class="page">
-    <div class="card">
-        <h3>📍 ព័ត៌មានមូលដ្ឋាន</h3>
-        <label>📅 ថ្ងៃខែ</label>
-        <input type="date" id="outDate">
-        <label>🏢 ដេប៉ូ</label>
-        <select id="outDepot"></select>
-        <label>🗺️ BOQ/តំបន់</label>
-        <select id="outZone"></select>
+    <div class="card"><h3>📍 ព័ត៌មាន</h3>
+        <label>📅 ថ្ងៃខែ</label><input type="date" id="outDate">
+        <label>🏢 ដេប៉ូ</label><select id="outDepot"></select>
+        <label>🗺️ BOQ</label><select id="outZone"></select>
     </div>
-    <div class="card">
-        <h3>📦 ដកទំនិញ</h3>
-        <input type="text" id="outSearch" placeholder="ស្វែងរកទំនិញ..." autocomplete="off" onkeyup="doSearch('out')">
+    <div class="card"><h3>📦 ដកទំនិញ</h3>
+        <input type="text" id="outSearch" placeholder="ស្វែងរក..." onkeyup="doSearch('out')">
         <div id="outRes" class="res-box"></div>
-        <input type="number" id="outQty" placeholder="ចំនួន (Qty)" min="1">
-        <button onclick="addItem('out')">+ បន្ថែមក្នុងបញ្ជី</button>
+        <input type="number" id="outQty" placeholder="ចំនួន">
+        <button onclick="addItem('out')">+ បន្ថែម</button>
         <div id="outCart"></div>
     </div>
-    <div class="card">
-        <h3>📷 រូបភាពភស្តុតាង</h3>
+    <div class="card"><h3>📷 រូបភាព</h3>
         <input type="file" id="outPhoto" accept="image/*" multiple>
         <div id="outPreview" class="photo-preview"></div>
-        <div id="outLoading" class="loading">⏳ កំពុងដំណើរការ...</div>
-        <button class="btn-out" onclick="sendData('OUT')">💾 រក្សាទុក STOCK OUT</button>
+        <div id="outLoading" class="loading">⏳ កំពុងរក្សាទុក...</div>
+        <button class="btn-out" onclick="sendData('OUT')">💾 រក្សាទុក OUT</button>
     </div>
-    <div id="outError" class="error-log"></div>
 </div>
-
 <script>
-    const tg = window.Telegram.WebApp;
+    const tg = Telegram.WebApp;
     tg.expand();
-    tg.MainButton.hide();
-
-    // ========== 🔧 កែ URL នេះ ==========
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwcYz158_G0yvWpv_PLMDOtCVI-iUUVmshh6N-YngpoU8jSXKff_tRmpj0Anqwa-vGa/exec"; // 👈 ប្តូរទីនេះ!
-    // ====================================
-
-    let db = { items: [], depots: [], boqList: [], depotBoqMap: {} };
-    let carts = { in: [], out: [] };
-    let selectedItems = { in: null, out: null };
-    let selectedFiles = { in: [], out: [] };
-
-    function showError(type, msg) {
-        const errorDiv = document.getElementById(`${type}Error`);
-        errorDiv.innerHTML = msg;
-        errorDiv.style.display = 'block';
-        setTimeout(() => errorDiv.style.display = 'none', 5000);
-    }
-
+    // 👇 ប្តូរ URL នេះតាម Apps Script របស់អ្នក
+    const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+    
+    let db = {items:[], depots:[], boqList:[], depotBoqMap:{}};
+    let carts = {in:[], out:[]};
+    let selected = {in:null, out:null};
+    let images = {in:[], out:[]};
+    
     document.getElementById('inDate').valueAsDate = new Date();
     document.getElementById('outDate').valueAsDate = new Date();
-
+    
     async function init() {
-        try {
-            const res = await fetch(SCRIPT_URL + "?action=getData");
-            if (!res.ok) throw new Error("HTTP " + res.status);
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
-            db.items = data.items || [];
-            db.depots = data.depots || [];
-            db.boqList = data.boqList || [];
-            db.depotBoqMap = data.depotBoqMap || {};
-            console.log("Loaded items:", db.items.length);
-            populateSelect('inDepot', db.depots);
-            populateSelect('outDepot', db.depots);
-            document.getElementById('inDepot').addEventListener('change', () => updateZoneDropdown('in'));
-            document.getElementById('outDepot').addEventListener('change', () => updateZoneDropdown('out'));
-            updateZoneDropdown('in');
-            updateZoneDropdown('out');
-        } catch(e) {
-            console.error("Init error:", e);
-            showError('in', "មិនអាចទាញទិន្នន័យ: " + e.message);
-        }
+        let res = await fetch(SCRIPT_URL);
+        let data = await res.json();
+        if(data.error) return alert("Error: "+data.error);
+        db = data;
+        populate('inDepot', db.depots);
+        populate('outDepot', db.depots);
+        document.getElementById('inDepot').onchange = ()=> updateZone('in');
+        document.getElementById('outDepot').onchange = ()=> updateZone('out');
+        updateZone('in'); updateZone('out');
     }
-
-    function populateSelect(id, options) {
-        const select = document.getElementById(id);
-        if(!select) return;
-        select.innerHTML = '<option value="">ជ្រើសរើស...</option>';
-        options.forEach(opt => select.add(new Option(opt, opt)));
+    function populate(id, arr) {
+        let sel = document.getElementById(id);
+        sel.innerHTML = '<option value="">ជ្រើស...</option>';
+        arr.forEach(v => sel.add(new Option(v,v)));
     }
-
-    function updateZoneDropdown(type) {
-        const depot = document.getElementById(`${type}Depot`).value;
-        const zoneSelect = document.getElementById(`${type}Zone`);
-        let zones = [];
-        if (depot && db.depotBoqMap[depot]) zones = db.depotBoqMap[depot];
-        else zones = db.boqList;
-        zoneSelect.innerHTML = '<option value="">ជ្រើសរើស BOQ...</option>';
-        zones.forEach(z => zoneSelect.add(new Option(z, z)));
+    function updateZone(type) {
+        let depot = document.getElementById(type+'Depot').value;
+        let zones = db.depotBoqMap[depot] || db.boqList;
+        let sel = document.getElementById(type+'Zone');
+        sel.innerHTML = '<option value="">ជ្រើស BOQ...</option>';
+        zones.forEach(z => sel.add(new Option(z,z)));
     }
-
-    function switchPage(page) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(`page-${page}`).classList.add('active');
-        const idx = {in:0, out:1}[page];
-        if(idx !== undefined) document.querySelectorAll('.nav-item')[idx].classList.add('active');
-    }
-
     function doSearch(type) {
-        const keyword = document.getElementById(`${type}Search`).value.toLowerCase().trim();
-        const resBox = document.getElementById(`${type}Res`);
-        if(keyword.length < 1) { resBox.style.display = 'none'; resBox.innerHTML = ''; return; }
-        const matched = db.items.filter(i => i.name.toLowerCase().includes(keyword) || (i.code && i.code.toLowerCase().includes(keyword)));
-        resBox.innerHTML = '';
-        matched.slice(0,8).forEach(item => {
-            const div = document.createElement('div');
+        let kw = document.getElementById(type+'Search').value.toLowerCase();
+        let box = document.getElementById(type+'Res');
+        if(kw.length<2) { box.style.display='none'; return; }
+        let matches = db.items.filter(i => i.name.toLowerCase().includes(kw) || i.code.toLowerCase().includes(kw));
+        box.innerHTML = '';
+        matches.slice(0,8).forEach(i => {
+            let div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = `<strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''} ${item.unit ? `[${item.unit}]` : ''}`;
-            div.onclick = () => { 
-                selectedItems[type] = item; 
-                document.getElementById(`${type}Search`).value = item.name; 
-                resBox.style.display = 'none'; 
+            div.innerText = i.name + ' ('+i.code+') '+i.unit;
+            div.onclick = () => {
+                selected[type] = i;
+                document.getElementById(type+'Search').value = i.name;
+                box.style.display='none';
             };
-            resBox.appendChild(div);
+            box.appendChild(div);
         });
-        resBox.style.display = 'block';
+        box.style.display = 'block';
     }
-
-    document.addEventListener('click', function(e) {
-        if(!e.target.closest('.res-box') && !e.target.closest('input[placeholder*="ស្វែងរក"]')) {
-            document.querySelectorAll('.res-box').forEach(b => b.style.display = 'none');
-        }
-    });
-
     function addItem(type) {
-        const qty = document.getElementById(`${type}Qty`).value;
-        const selected = selectedItems[type];
-        if(!selected) { tg.showAlert("សូមជ្រើសរើសទំនិញ!"); return; }
-        if(!qty || parseInt(qty) <= 0) { tg.showAlert("សូមបញ្ចូលចំនួន!"); return; }
-        const existing = carts[type].find(i => i.code === selected.code);
+        let qty = document.getElementById(type+'Qty').value;
+        let item = selected[type];
+        if(!item) return tg.showAlert("ជ្រើសទំនិញ");
+        if(!qty || qty<=0) return tg.showAlert("បញ្ចូលចំនួន");
+        let existing = carts[type].find(x=>x.code===item.code);
         if(existing) existing.qty += parseInt(qty);
-        else carts[type].push({ ...selected, qty: parseInt(qty) });
+        else carts[type].push({...item, qty:parseInt(qty)});
         renderCart(type);
-        document.getElementById(`${type}Search`).value = '';
-        document.getElementById(`${type}Qty`).value = '';
-        selectedItems[type] = null;
-        tg.showAlert(`បានបន្ថែម ${selected.name} ចំនួន ${qty}`);
+        document.getElementById(type+'Search').value = '';
+        document.getElementById(type+'Qty').value = '';
+        selected[type] = null;
+        tg.showAlert("បានបន្ថែម");
     }
-
-    function removeFromCart(type, idx) {
-        carts[type].splice(idx,1);
-        renderCart(type);
-    }
-
     function renderCart(type) {
-        const container = document.getElementById(`${type}Cart`);
-        if(carts[type].length === 0) { container.innerHTML = '<div class="empty-cart">📭 មិនទាន់មានទំនិញ</div>'; return; }
-        container.innerHTML = carts[type].map((item, idx) => `
+        let div = document.getElementById(type+'Cart');
+        if(carts[type].length===0) { div.innerHTML='<div class="empty-cart">គ្មានទំនិញ</div>'; return; }
+        div.innerHTML = carts[type].map((it,idx)=>`
             <div class="cart-item">
-                <span><strong>${item.name}</strong> ${item.code ? `(${item.code})` : ''}</span>
-                <div><span class="cart-qty">${item.qty} ${item.unit||''}</span>
-                <button class="remove-item" onclick="removeFromCart('${type}', ${idx})">✕</button></div>
+                <span><b>${it.name}</b> (${it.code})</span>
+                <div><span class="cart-qty">${it.qty} ${it.unit||''}</span>
+                <button class="remove-item" onclick="removeFromCart('${type}',${idx})">✕</button></div>
             </div>
         `).join('');
     }
-
-    function setupImagePreview(type) {
-        const input = document.getElementById(`${type}Photo`);
-        const preview = document.getElementById(`${type}Preview`);
-        input.addEventListener('change', function(e) {
+    function removeFromCart(type,idx) { carts[type].splice(idx,1); renderCart(type); }
+    function setupPreview(type) {
+        let input = document.getElementById(type+'Photo');
+        let preview = document.getElementById(type+'Preview');
+        input.onchange = () => {
             preview.innerHTML = '';
-            selectedFiles[type] = Array.from(e.target.files);
-            selectedFiles[type].forEach(file => {
-                const reader = new FileReader();
-                reader.onload = ev => { const img = document.createElement('img'); img.src = ev.target.result; img.className = 'preview-img'; preview.appendChild(img); };
-                reader.readAsDataURL(file);
+            images[type] = Array.from(input.files);
+            images[type].forEach(f=>{
+                let reader = new FileReader();
+                reader.onload = e=>{ let img = document.createElement('img'); img.src=e.target.result; img.className='preview-img'; preview.appendChild(img); };
+                reader.readAsDataURL(f);
             });
-        });
+        };
     }
-
     function filesToBase64(files) {
-        return Promise.all(files.map(f => new Promise((res,rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(f); })));
+        return Promise.all(files.map(f=>new Promise((res,rej)=>{
+            let r = new FileReader();
+            r.onload = ()=>res(r.result.split(',')[1]);
+            r.onerror = rej;
+            r.readAsDataURL(f);
+        })));
     }
-
     async function sendData(type) {
-        const ltype = type.toLowerCase();
-        if(carts[ltype].length === 0) { tg.showAlert("សូមបន្ថែមទំនិញក្នុងបញ្ជី!"); return; }
-        const date = document.getElementById(`${ltype}Date`).value;
-        const depot = document.getElementById(`${ltype}Depot`).value;
-        const zone = document.getElementById(`${ltype}Zone`).value;
-        if(!depot || !zone) { tg.showAlert("សូមជ្រើសរើសដេប៉ូ និង BOQ!"); return; }
-        const loadingDiv = document.getElementById(`${ltype}Loading`);
-        const btn = event.target;
-        loadingDiv.style.display = 'block';
-        btn.disabled = true;
+        let t = type.toLowerCase();
+        if(carts[t].length===0) return tg.showAlert("បន្ថែមទំនិញ");
+        let date = document.getElementById(t+'Date').value;
+        let depot = document.getElementById(t+'Depot').value;
+        let zone = document.getElementById(t+'Zone').value;
+        if(!depot || !zone) return tg.showAlert("ជ្រើសដេប៉ូ និង BOQ");
+        let loading = document.getElementById(t+'Loading');
+        let btn = event.target;
+        loading.style.display='block';
+        btn.disabled=true;
         try {
-            let images = [];
-            if(selectedFiles[ltype].length) images = await filesToBase64(selectedFiles[ltype]);
-            const payload = { action: 'saveStock', type: type, date, depot, zone, items: carts[ltype], images, user: tg.initDataUnsafe?.user?.username || tg.initDataUnsafe?.user?.first_name || 'Chantrea' };
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            tg.showAlert(`✅ ${type === 'IN' ? 'បញ្ចូល' : 'ដក'}ស្តុកបានជោគជ័យ!`);
-            carts[ltype] = [];
-            renderCart(ltype);
-            selectedFiles[ltype] = [];
-            document.getElementById(`${ltype}Preview`).innerHTML = '';
-            document.getElementById(`${ltype}Photo`).value = '';
-        } catch(e) {
-            tg.showAlert("❌ កំហុស: "+e.message);
-            showError(ltype, e.message);
-        } finally {
-            loadingDiv.style.display = 'none';
-            btn.disabled = false;
-        }
+            let imgs = images[t].length ? await filesToBase64(images[t]) : [];
+            let payload = { action:'saveStock', type, date, depot, zone, items: carts[t], images: imgs, user: tg.initDataUnsafe?.user?.first_name || 'Chantrea' };
+            let res = await fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            let result = await res.json();
+            if(result.status==='success') {
+                tg.showAlert("រក្សាទុកជោគជ័យ!");
+                carts[t]=[]; renderCart(t);
+                images[t]=[]; document.getElementById(t+'Preview').innerHTML='';
+                document.getElementById(t+'Photo').value='';
+            } else tg.showAlert("បរាជ័យ: "+result.message);
+        } catch(e) { tg.showAlert("កំហុស: "+e.message); }
+        finally { loading.style.display='none'; btn.disabled=false; }
     }
-
-    setupImagePreview('in');
-    setupImagePreview('out');
+    function switchPage(p) {
+        document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+        document.getElementById('page-'+p).classList.add('active');
+        if(p==='in') document.querySelector('.nav-item:first-child').classList.add('active');
+        else document.querySelector('.nav-item:last-child').classList.add('active');
+    }
+    setupPreview('in'); setupPreview('out');
     init();
 </script>
 </body>
