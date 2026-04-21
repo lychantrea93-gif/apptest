@@ -2,282 +2,149 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Stock Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock System</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #f0f2f5; margin: 0; padding: 0 0 80px 0; color: #333; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .nav-item { flex: 1; text-align: center; padding: 15px 5px; font-size: 12px; font-weight: bold; color: #888; cursor: pointer; transition: 0.3s; }
-        .nav-item.active { color: #2b7a3e; border-top: 3px solid #2b7a3e; background: #f9f9f9; }
-        .page { display: none; padding: 15px; animation: fadeIn 0.3s; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h3 { margin-top: 0; color: #2b7a3e; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 13px; color: #555; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
-        input:focus { border-color: #2b7a3e; }
-        button { width: 100%; padding: 15px; background: #2b7a3e; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; font-size: 16px; }
-        button:active { transform: scale(0.98); }
-        .btn-out { background: #c0392b; }
-        .relative { position: relative; }
-        .res-box { position: absolute; background: white; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; width: 100%; z-index: 100; border-radius: 8px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 5px; }
-        .item-row { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .item-row:hover { background-color: #f1f8e9; }
-        .item-row div { font-size: 14px; font-weight: 600; }
-        .item-row small { color: #777; font-size: 12px; }
-        .cart-item { background: #f9f9f9; padding: 12px; margin-top: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #2b7a3e; }
-        .cart-item.out { border-left-color: #c0392b; }
-        .remove-btn { color: #e74c3c; font-weight: bold; cursor: pointer; padding: 5px 10px; }
-        .preview-img { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; margin-top: 10px; margin-right: 8px; border: 1px solid #ddd; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
-        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: left; }
-        th { background: #2b7a3e; color: white; }
-        tr:nth-child(even) { background: #fafafa; }
-        .loading-overlay { display: none; text-align: center; color: #2b7a3e; font-weight: bold; padding: 15px; }
+        /* CSS ខ្លីៗសម្រាប់ទូរស័ព្ទ */
+        body { font-family: sans-serif; background: #f4f4f4; padding: 10px; margin: 0; padding-bottom: 70px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-main { background: #2b7a3e; color: white; }
+        .btn-out { background: #c0392b; color: white; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; text-align: center; padding: 15px; font-size: 12px; cursor: pointer; }
+        .nav-item.active { color: #2b7a3e; font-weight: bold; border-top: 3px solid #2b7a3e; }
+        .res-box { position: absolute; background: white; border: 1px solid #ddd; width: 90%; z-index: 100; display: none; max-height: 200px; overflow-y: auto; }
+        .item-row { padding: 10px; border-bottom: 1px solid #eee; }
+        .cart-item { background: #eee; padding: 8px; margin-top: 5px; border-radius: 5px; display: flex; justify-content: space-between; }
+        .page { display: none; } .page.active { display: block; }
     </style>
 </head>
 <body>
 
-<!-- PAGE IN -->
 <div id="page-in" class="page active">
     <div class="card">
-        <h3>📥 បញ្ចូលស្តុក (Stock IN)</h3>
-        <label>📅 កាលបរិច្ឆេទ</label>
-        <input type="date" id="in-date">
-        <label>🏢 ជ្រើសរើសដេប៉ូ</label>
-        <select id="in-depot"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
-        <label>🗺️ ទីតាំង/Zone</label>
-        <select id="in-zone"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
-        
-        <label>🔍 ស្វែងរកទំនិញ (វាយឈ្មោះ ឬកូដ)</label>
-        <div class="relative">
-            <input type="text" id="in-search" placeholder="ស្វែងរកទំនិញនៅទីនេះ..." autocomplete="off">
-            <div id="in-results" class="res-box"></div>
-        </div>
-        
-        <label>📦 ចំនួន</label>
-        <input type="number" id="in-qty" step="any" placeholder="0.00">
-        <button onclick="addToCart('in')">+ បន្ថែមក្នុងបញ្ជី</button>
-        
+        <h3 style="color:#2b7a3e">📥 STOCK IN</h3>
+        <label>កាលបរិច្ឆេទ</label><input type="date" id="in-date">
+        <label>ជ្រើសរើសដេប៉ូ</label><select id="in-depot"></select>
+        <label>ទីតាំង/Zone</label><select id="in-zone"></select>
+        <label>ស្វែងរកទំនិញ</label>
+        <input type="text" id="in-search" placeholder="វាយឈ្មោះទំនិញ...">
+        <div id="in-results" class="res-box"></div>
+        <label>ចំនួន</label><input type="number" id="in-qty">
+        <button class="btn-main" onclick="addToCart('in')">+ បន្ថែមក្នុងបញ្ជី</button>
         <div id="in-cart"></div>
-        
-        <label>📷 ថតរូបភាពភ្ជាប់</label>
-        <input type="file" id="in-photo" accept="image/*" multiple>
-        <div id="in-preview" style="display: flex; flex-wrap: wrap;"></div>
-        
-        <button id="in-submit" onclick="submitData('in')">💾 រក្សាទុកទិន្នន័យ</button>
-        <div id="in-loading" class="loading-overlay">⏳ កំពុងបញ្ជូនទិន្នន័យ...</div>
+        <label>រូបភាព</label><input type="file" id="in-photo" accept="image/*" multiple>
+        <button id="in-btn-save" class="btn-main" style="margin-top:20px" onclick="submitData('in')">💾 រក្សាទុក</button>
     </div>
 </div>
 
-<!-- PAGE OUT -->
 <div id="page-out" class="page">
     <div class="card">
-        <h3>📤 ដកស្តុក (Stock OUT)</h3>
-        <label>📅 កាលបរិច្ឆេទ</label>
-        <input type="date" id="out-date">
-        <label>🏢 ជ្រើសរើសដេប៉ូ</label>
-        <select id="out-depot"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
-        <label>🗺️ ទីតាំង/Zone</label>
-        <select id="out-zone"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
-        
-        <label>🔍 ស្វែងរកទំនិញ (វាយឈ្មោះ ឬកូដ)</label>
-        <div class="relative">
-            <input type="text" id="out-search" placeholder="ស្វែងរកទំនិញនៅទីនេះ..." autocomplete="off">
-            <div id="out-results" class="res-box"></div>
-        </div>
-        
-        <label>📦 ចំនួន</label>
-        <input type="number" id="out-qty" step="any" placeholder="0.00">
-        <button onclick="addToCart('out')" class="btn-out">+ បន្ថែមក្នុងបញ្ជី</button>
-        
+        <h3 style="color:#c0392b">📤 STOCK OUT</h3>
+        <label>កាលបរិច្ឆេទ</label><input type="date" id="out-date">
+        <label>ជ្រើសរើសដេប៉ូ</label><select id="out-depot"></select>
+        <label>ទីតាំង/Zone</label><select id="out-zone"></select>
+        <label>ស្វែងរកទំនិញ</label>
+        <input type="text" id="out-search" placeholder="វាយឈ្មោះទំនិញ...">
+        <div id="out-results" class="res-box"></div>
+        <label>ចំនួន</label><input type="number" id="out-qty">
+        <button class="btn-out" onclick="addToCart('out')">+ បន្ថែមក្នុងបញ្ជី</button>
         <div id="out-cart"></div>
-        
-        <label>📷 ថតរូបភាពភ្ជាប់</label>
-        <input type="file" id="out-photo" accept="image/*" multiple>
-        <div id="out-preview" style="display: flex; flex-wrap: wrap;"></div>
-        
-        <button id="out-submit" onclick="submitData('out')" class="btn-out">💾 រក្សាទុកទិន្នន័យ</button>
-        <div id="out-loading" class="loading-overlay">⏳ កំពុងបញ្ជូនទិន្នន័យ...</div>
-    </div>
-</div>
-
-<!-- PAGE BALANCE -->
-<div id="page-balance" class="page">
-    <div class="card">
-        <h3>⚖️ តុល្យភាពស្តុកបច្ចុប្បន្ន</h3>
-        <div style="overflow-x:auto" id="balance-table"></div>
+        <label>រូបភាព</label><input type="file" id="out-photo" accept="image/*" multiple>
+        <button id="out-btn-save" class="btn-out" style="margin-top:20px" onclick="submitData('out')">💾 រក្សាទុក</button>
     </div>
 </div>
 
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="showPage('in')">📥 STOCK IN</div>
-    <div class="nav-item" onclick="showPage('out')">📤 STOCK OUT</div>
-    <div class="nav-item" onclick="showPage('balance')">⚖️ BALANCE</div>
+    <div class="nav-item active" onclick="switchPage('in', this)">IN</div>
+    <div class="nav-item" onclick="switchPage('out', this)">OUT</div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjk6xQVvRoIbvfJ2dV2qrlHKRtUFmOf2h6952DLg4Yhco3w4f_BU0VFnbrLbEvr8z1/exec";
-    let appData = { items: [], depots: [], zones: [], balance: [] };
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHGUUVi4WUTrjHj7qhZlNzIeJK1hb48nKQV2ghQqoih5nTINxP0glc99aVZAsIcUUq/exec";
+    let appData = { items: [], depots: [], zones: [] };
     let carts = { in: [], out: [] };
     let selectedItem = null;
 
-    // ទាញទិន្នន័យពី Server
-    async function fetchData() {
-        try {
-            const res = await fetch(SCRIPT_URL);
-            appData = await res.json();
-            fillDropdown("in-depot", appData.depots);
-            fillDropdown("out-depot", appData.depots);
-            fillDropdown("in-zone", appData.zones);
-            fillDropdown("out-zone", appData.zones);
-            renderBalance(appData.balance);
-        } catch (e) {
-            console.error("Fetch Error:", e);
-        }
-    }
-
-    function fillDropdown(id, list) {
-        const el = document.getElementById(id);
-        if (!list || list.length === 0) {
-            el.innerHTML = '<option value="">-- គ្មានទិន្នន័យ --</option>';
-            return;
-        }
-        el.innerHTML = '<option value="">-- ជ្រើសរើស --</option>' + list.map(i => `<option value="${i}">${i}</option>`).join('');
-    }
-
-    function showPage(p) {
-        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        document.getElementById('page-' + p).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-
-    // មុខងារស្វែងរកទំនិញ (ពង្រឹងថ្មី)
-    ['in', 'out'].forEach(type => {
-        const input = document.getElementById(type + '-search');
-        const resBox = document.getElementById(type + '-results');
+    async function init() {
+        const res = await fetch(SCRIPT_URL);
+        appData = await res.json();
         
+        ['in', 'out'].forEach(type => {
+            document.getElementById(type+'-depot').innerHTML = appData.depots.map(d => `<option value="${d}">${d}</option>`).join('');
+            document.getElementById(type+'-zone').innerHTML = appData.zones.map(z => `<option value="${z}">${z}</option>`).join('');
+            setupSearch(type);
+        });
+    }
+
+    function setupSearch(type) {
+        const input = document.getElementById(type+'-search');
+        const resBox = document.getElementById(type+'-results');
         input.oninput = () => {
+            const val = input.value.toLowerCase();
+            if(!val) { resBox.style.display='none'; return; }
+            const matches = appData.items.filter(i => i.name.toLowerCase().includes(val) || i.code.toLowerCase().includes(val));
+            resBox.innerHTML = matches.map(i => `<div class="item-row" onclick="selectItem('${type}','${i.code}','${i.name}','${i.unit}')">${i.name} (${i.code})</div>`).join('');
+            resBox.style.display = 'block';
+        };
+    }
 
     function selectItem(type, code, name, unit) {
         selectedItem = { code, name, unit };
-        document.getElementById(type + '-search').value = name + " (" + code + ")";
-        document.getElementById(type + '-results').style.display = 'none';
+        document.getElementById(type+'-search').value = name;
+        document.getElementById(type+'-results').style.display = 'none';
     }
 
     function addToCart(type) {
-        const qty = document.getElementById(type + '-qty').value;
-        if (!selectedItem || !qty || qty <= 0) {
-            alert("សូមជ្រើសរើសទំនិញ និងបញ្ជាក់ចំនួនឱ្យបានត្រឹមត្រូវ");
-            return;
-        }
-        carts[type].push({ ...selectedItem, qty });
-        renderCart(type);
-        
-        // Reset Search
-        selectedItem = null;
-        document.getElementById(type + '-search').value = '';
-        document.getElementById(type + '-qty').value = '';
+        const qty = document.getElementById(type+'-qty').value;
+        if(!selectedItem || !qty) return alert("សូមរើសទំនិញ និងចំនួន");
+        carts[type].push({...selectedItem, qty});
+        document.getElementById(type+'-cart').innerHTML = carts[type].map((i, idx) => `<div class="cart-item"><span>${i.name} x ${i.qty}</span></div>`).join('');
+        selectedItem = null; document.getElementById(type+'-search').value = ''; document.getElementById(type+'-qty').value = '';
     }
-
-    function renderCart(type) {
-        const container = document.getElementById(type + '-cart');
-        container.innerHTML = carts[type].map((i, idx) => `
-            <div class="cart-item ${type === 'out' ? 'out' : ''}">
-                <div>
-                    <strong>${i.name}</strong><br>
-                    <small>កូដ: ${i.code} | ចំនួន: ${i.qty} ${i.unit}</small>
-                </div>
-                <div class="remove-btn" onclick="carts['${type}'].splice(${idx},1); renderCart('${type}')">✕</div>
-            </div>
-        `).join('');
-    }
-
-    // បង្ហាញរូបភាព Preview
-    ['in', 'out'].forEach(type => {
-        document.getElementById(type + '-photo').onchange = function(e) {
-            const preview = document.getElementById(type + '-preview');
-            preview.innerHTML = '';
-            for (let f of e.target.files) {
-                const rd = new FileReader();
-                rd.onload = (ex) => { preview.innerHTML += `<img src="${ex.target.result}" class="preview-img">`; };
-                rd.readAsDataURL(f);
-            }
-        };
-    });
 
     async function submitData(type) {
-        const date = document.getElementById(type + '-date').value;
-        const depot = document.getElementById(type + '-depot').value;
-        const zone = document.getElementById(type + '-zone').value;
-        const btn = document.getElementById(type + '-submit');
-        const loading = document.getElementById(type + '-loading');
+        const btn = document.getElementById(type+'-btn-save');
+        btn.disabled = true; btn.innerText = "កំពុងរក្សាទុក...";
+        
+        const payload = {
+            action: type === 'in' ? 'saveStockIn' : 'saveStockOut',
+            date: document.getElementById(type+'-date').value,
+            depot: document.getElementById(type+'-depot').value,
+            zone: document.getElementById(type+'-zone').value,
+            items: carts[type],
+            images: [],
+            user: window.Telegram.WebApp.initDataUnsafe?.user?.first_name || "Admin"
+        };
 
-        if (!date || !depot || !zone || carts[type].length === 0) {
-            alert("សូមបំពេញព័ត៌មានឱ្យគ្រប់គ្រាន់ (ថ្ងៃខែ, ដេប៉ូ, ទីតាំង និងទំនិញ)");
-            return;
-        }
-
-        btn.style.display = 'none';
-        loading.style.display = 'block';
-
-        const images = [];
-        const files = document.getElementById(type + '-photo').files;
+        const files = document.getElementById(type+'-photo').files;
         for (let f of files) {
             const b64 = await new Promise(r => {
                 const rd = new FileReader();
                 rd.onload = () => r(rd.result.split(',')[1]);
                 rd.readAsDataURL(f);
             });
-            images.push(b64);
+            payload.images.push(b64);
         }
 
-        const payload = {
-            action: type === 'in' ? 'saveStockIn' : 'saveStockOut',
-            date, depot, zone, items: carts[type], images,
-            user: window.Telegram.WebApp.initDataUnsafe?.user?.first_name || "អ្នកប្រើប្រាស់"
-        };
-
-        try {
-            const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await res.json();
-            if (result.status === 'success') {
-                alert("រក្សាទុកជោគជ័យ និងផ្ញើទៅ Telegram រួចរាល់!");
-                location.reload();
-            } else {
-                alert("កំហុស: " + result.message);
-            }
-        } catch (e) {
-            alert("មិនអាចតភ្ជាប់ទៅកាន់ Server បានទេ!");
-        }
-        btn.style.display = 'block';
-        loading.style.display = 'none';
+        await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        alert("ជោគជ័យ!");
+        location.reload();
     }
 
-    function renderBalance(data) {
-        const container = document.getElementById('balance-table');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#999">មិនមានទិន្នន័យតុល្យភាព...</p>';
-            return;
-        }
-        
-        const headers = Object.keys(data[0]);
-        let html = '<table><tr>' + headers.map(h => `<th>${h.toUpperCase().replace(/_/g,' ')}</th>`).join('') + '</tr>';
-        data.forEach(r => {
-            html += '<tr>' + headers.map(h => `<td>${r[h] !== null ? r[h] : 0}</td>`).join('') + '</tr>';
-        });
-        container.innerHTML = html + '</table>';
+    function switchPage(p, el) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nv => nv.classList.remove('active'));
+        document.getElementById('page-'+p).classList.add('active');
+        el.classList.add('active');
     }
 
-    // ចាប់ផ្តើម App
-    fetchData();
     document.getElementById('in-date').valueAsDate = new Date();
     document.getElementById('out-date').valueAsDate = new Date();
+    init();
 </script>
-
 </body>
 </html>
