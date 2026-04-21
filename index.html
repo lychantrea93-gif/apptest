@@ -3,113 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Stock App</title>
+    <title>Stock Management System</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 0 0 80px 0; }
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
-        .nav-item { flex: 1; text-align: center; padding: 15px 5px; font-size: 12px; font-weight: bold; color: #777; cursor: pointer; }
-        .nav-item.active { color: #2b7a3e; border-top: 3px solid #2b7a3e; }
-        .page { display: none; padding: 15px; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #f0f2f5; margin: 0; padding: 0 0 80px 0; color: #333; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; padding: 15px 5px; font-size: 12px; font-weight: bold; color: #888; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: #2b7a3e; border-top: 3px solid #2b7a3e; background: #f9f9f9; }
+        .page { display: none; padding: 15px; animation: fadeIn 0.3s; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h3 { margin-top: 0; color: #2b7a3e; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        h3 { margin-top: 0; color: #2b7a3e; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         label { display: block; margin-top: 15px; font-weight: 600; font-size: 13px; color: #555; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        button { width: 100%; padding: 15px; background: #2b7a3e; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus { border-color: #2b7a3e; }
+        button { width: 100%; padding: 15px; background: #2b7a3e; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; font-size: 16px; }
+        button:active { transform: scale(0.98); }
         .btn-out { background: #c0392b; }
-        .res-box { position: absolute; background: white; border: 1px solid #ddd; max-height: 200px; overflow-y: auto; width: calc(100% - 40px); z-index: 100; border-radius: 8px; display: none; }
-        .item-row { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
-        .cart-item { background: #f9f9f9; padding: 10px; margin-top: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .preview-img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; margin-top: 10px; margin-right: 5px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .relative { position: relative; }
+        .res-box { position: absolute; background: white; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; width: 100%; z-index: 100; border-radius: 8px; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-top: 5px; }
+        .item-row { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .item-row:hover { background-color: #f1f8e9; }
+        .item-row div { font-size: 14px; font-weight: 600; }
+        .item-row small { color: #777; font-size: 12px; }
+        .cart-item { background: #f9f9f9; padding: 12px; margin-top: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #2b7a3e; }
+        .cart-item.out { border-left-color: #c0392b; }
+        .remove-btn { color: #e74c3c; font-weight: bold; cursor: pointer; padding: 5px 10px; }
+        .preview-img { width: 65px; height: 65px; object-fit: cover; border-radius: 8px; margin-top: 10px; margin-right: 8px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+        th, td { border: 1px solid #eee; padding: 12px 8px; text-align: left; }
         th { background: #2b7a3e; color: white; }
-        .loading { display: none; text-align: center; color: #2b7a3e; font-weight: bold; padding: 10px; }
+        tr:nth-child(even) { background: #fafafa; }
+        .loading-overlay { display: none; text-align: center; color: #2b7a3e; font-weight: bold; padding: 15px; }
     </style>
 </head>
 <body>
 
+<!-- PAGE IN -->
 <div id="page-in" class="page active">
     <div class="card">
         <h3>📥 បញ្ចូលស្តុក (Stock IN)</h3>
         <label>📅 កាលបរិច្ឆេទ</label>
         <input type="date" id="in-date">
         <label>🏢 ជ្រើសរើសដេប៉ូ</label>
-        <select id="in-depot"><option>កំពុងទាញទិន្នន័យ...</option></select>
+        <select id="in-depot"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
         <label>🗺️ ទីតាំង/Zone</label>
-        <select id="in-zone"><option>កំពុងទាញទិន្នន័យ...</option></select>
-        <label>🔍 ស្វែងរកទំនិញ</label>
-        <input type="text" id="in-search" placeholder="វាយឈ្មោះទំនិញ..." autocomplete="off">
-        <div id="in-results" class="res-box"></div>
+        <select id="in-zone"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
+        
+        <label>🔍 ស្វែងរកទំនិញ (វាយឈ្មោះ ឬកូដ)</label>
+        <div class="relative">
+            <input type="text" id="in-search" placeholder="ស្វែងរកទំនិញនៅទីនេះ..." autocomplete="off">
+            <div id="in-results" class="res-box"></div>
+        </div>
+        
         <label>📦 ចំនួន</label>
-        <input type="number" id="in-qty">
+        <input type="number" id="in-qty" step="any" placeholder="0.00">
         <button onclick="addToCart('in')">+ បន្ថែមក្នុងបញ្ជី</button>
+        
         <div id="in-cart"></div>
-        <label>📷 រូបភាព</label>
+        
+        <label>📷 ថតរូបភាពភ្ជាប់</label>
         <input type="file" id="in-photo" accept="image/*" multiple>
-        <div id="in-preview"></div>
+        <div id="in-preview" style="display: flex; flex-wrap: wrap;"></div>
+        
         <button id="in-submit" onclick="submitData('in')">💾 រក្សាទុកទិន្នន័យ</button>
-        <div id="in-loading" class="loading">⏳ កំពុងដំណើរការ...</div>
+        <div id="in-loading" class="loading-overlay">⏳ កំពុងបញ្ជូនទិន្នន័យ...</div>
     </div>
 </div>
 
+<!-- PAGE OUT -->
 <div id="page-out" class="page">
     <div class="card">
         <h3>📤 ដកស្តុក (Stock OUT)</h3>
         <label>📅 កាលបរិច្ឆេទ</label>
         <input type="date" id="out-date">
         <label>🏢 ជ្រើសរើសដេប៉ូ</label>
-        <select id="out-depot"><option>កំពុងទាញទិន្នន័យ...</option></select>
+        <select id="out-depot"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
         <label>🗺️ ទីតាំង/Zone</label>
-        <select id="out-zone"><option>កំពុងទាញទិន្នន័យ...</option></select>
-        <label>🔍 ស្វែងរកទំនិញ</label>
-        <input type="text" id="out-search" placeholder="វាយឈ្មោះទំនិញ..." autocomplete="off">
-        <div id="out-results" class="res-box"></div>
+        <select id="out-zone"><option value="">កំពុងទាញទិន្នន័យ...</option></select>
+        
+        <label>🔍 ស្វែងរកទំនិញ (វាយឈ្មោះ ឬកូដ)</label>
+        <div class="relative">
+            <input type="text" id="out-search" placeholder="ស្វែងរកទំនិញនៅទីនេះ..." autocomplete="off">
+            <div id="out-results" class="res-box"></div>
+        </div>
+        
         <label>📦 ចំនួន</label>
-        <input type="number" id="out-qty">
+        <input type="number" id="out-qty" step="any" placeholder="0.00">
         <button onclick="addToCart('out')" class="btn-out">+ បន្ថែមក្នុងបញ្ជី</button>
+        
         <div id="out-cart"></div>
-        <label>📷 រូបភាព</label>
+        
+        <label>📷 ថតរូបភាពភ្ជាប់</label>
         <input type="file" id="out-photo" accept="image/*" multiple>
-        <div id="out-preview"></div>
+        <div id="out-preview" style="display: flex; flex-wrap: wrap;"></div>
+        
         <button id="out-submit" onclick="submitData('out')" class="btn-out">💾 រក្សាទុកទិន្នន័យ</button>
-        <div id="out-loading" class="loading">⏳ កំពុងដំណើរការ...</div>
+        <div id="out-loading" class="loading-overlay">⏳ កំពុងបញ្ជូនទិន្នន័យ...</div>
     </div>
 </div>
 
+<!-- PAGE BALANCE -->
 <div id="page-balance" class="page">
     <div class="card">
-        <h3>⚖️ តុល្យភាពស្តុក</h3>
+        <h3>⚖️ តុល្យភាពស្តុកបច្ចុប្បន្ន</h3>
         <div style="overflow-x:auto" id="balance-table"></div>
     </div>
 </div>
 
 <div class="bottom-nav">
-    <div class="nav-item active" onclick="showPage('in')">📥 IN</div>
-    <div class="nav-item" onclick="showPage('out')">📤 OUT</div>
+    <div class="nav-item active" onclick="showPage('in')">📥 STOCK IN</div>
+    <div class="nav-item" onclick="showPage('out')">📤 STOCK OUT</div>
     <div class="nav-item" onclick="showPage('balance')">⚖️ BALANCE</div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxNUElQNsCI9aacgaCyvrGfeS7wM4qQLWbRvDFZ9AuekRbN_35Xds_2gSJDWaVHGjxX/exec";
-    let appData = {};
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzt4kWmVIYE0Xm9sqiav5MO8CUq1wiZoJCZRnWZwtTMPCwxVsaGf3VTiNxeca1Rpr3j/exec";
+    let appData = { items: [], depots: [], zones: [], balance: [] };
     let carts = { in: [], out: [] };
     let selectedItem = null;
 
+    // ទាញទិន្នន័យពី Server
     async function fetchData() {
-        const res = await fetch(SCRIPT_URL);
-        appData = await res.json();
-        fillDropdown("in-depot", appData.depots);
-        fillDropdown("out-depot", appData.depots);
-        fillDropdown("in-zone", appData.zones);
-        fillDropdown("out-zone", appData.zones);
-        renderBalance(appData.balance);
+        try {
+            const res = await fetch(SCRIPT_URL);
+            appData = await res.json();
+            fillDropdown("in-depot", appData.depots);
+            fillDropdown("out-depot", appData.depots);
+            fillDropdown("in-zone", appData.zones);
+            fillDropdown("out-zone", appData.zones);
+            renderBalance(appData.balance);
+        } catch (e) {
+            console.error("Fetch Error:", e);
+        }
     }
 
     function fillDropdown(id, list) {
         const el = document.getElementById(id);
+        if (!list || list.length === 0) {
+            el.innerHTML = '<option value="">-- គ្មានទិន្នន័យ --</option>';
+            return;
+        }
         el.innerHTML = '<option value="">-- ជ្រើសរើស --</option>' + list.map(i => `<option value="${i}">${i}</option>`).join('');
     }
 
@@ -120,54 +156,96 @@
         event.currentTarget.classList.add('active');
     }
 
-    // មុខងារស្វែងរកទំនិញ
+    // មុខងារស្វែងរកទំនិញ (ពង្រឹងថ្មី)
     ['in', 'out'].forEach(type => {
         const input = document.getElementById(type + '-search');
         const resBox = document.getElementById(type + '-results');
+        
         input.oninput = () => {
-            const val = input.value.toLowerCase();
-            if (val.length < 2) { resBox.style.display = 'none'; return; }
-            const matches = appData.items.filter(i => i.item_name.toLowerCase().includes(val) || i.item_code.toString().toLowerCase().includes(val));
-            resBox.innerHTML = matches.map(i => `<div class="item-row" onclick="selectItem('${type}','${i.item_code}','${i.item_name}','${i.unit}')">${i.item_name} (${i.item_code})</div>`).join('');
-            resBox.style.display = 'block';
+            const val = input.value.trim().toLowerCase();
+            if (val.length < 1) { resBox.style.display = 'none'; return; }
+            
+            const matches = appData.items.filter(i => {
+                const name = (i.item_name || "").toString().toLowerCase();
+                const code = (i.item_code || "").toString().toLowerCase();
+                return name.includes(val) || code.includes(val);
+            }).slice(0, 15); // បង្ហាញតែ 15 មុខដំបូង
+
+            if (matches.length > 0) {
+                resBox.innerHTML = matches.map(i => `
+                    <div class="item-row" onclick="selectItem('${type}','${i.item_code}','${i.item_name}','${i.unit}')">
+                        <div>${i.item_name}</div>
+                        <small>កូដ: ${i.item_code} | ខ្នាត: ${i.unit}</small>
+                    </div>
+                `).join('');
+                resBox.style.display = 'block';
+            } else {
+                resBox.innerHTML = '<div class="item-row">រកមិនឃើញទំនិញ...</div>';
+                resBox.style.display = 'block';
+            }
         };
     });
 
     function selectItem(type, code, name, unit) {
         selectedItem = { code, name, unit };
-        document.getElementById(type + '-search').value = name;
+        document.getElementById(type + '-search').value = name + " (" + code + ")";
         document.getElementById(type + '-results').style.display = 'none';
     }
 
     function addToCart(type) {
         const qty = document.getElementById(type + '-qty').value;
-        if (!selectedItem || !qty) return alert("សូមរើសទំនិញ និងចំនួន");
+        if (!selectedItem || !qty || qty <= 0) {
+            alert("សូមជ្រើសរើសទំនិញ និងបញ្ជាក់ចំនួនឱ្យបានត្រឹមត្រូវ");
+            return;
+        }
         carts[type].push({ ...selectedItem, qty });
         renderCart(type);
+        
+        // Reset Search
         selectedItem = null;
         document.getElementById(type + '-search').value = '';
         document.getElementById(type + '-qty').value = '';
     }
 
     function renderCart(type) {
-        document.getElementById(type + '-cart').innerHTML = carts[type].map((i, idx) => `
-            <div class="cart-item">
-                <span>${i.name} x <b>${i.qty}</b></span>
-                <span style="color:red" onclick="carts['${type}'].splice(${idx},1); renderCart('${type}')">✕</span>
+        const container = document.getElementById(type + '-cart');
+        container.innerHTML = carts[type].map((i, idx) => `
+            <div class="cart-item ${type === 'out' ? 'out' : ''}">
+                <div>
+                    <strong>${i.name}</strong><br>
+                    <small>កូដ: ${i.code} | ចំនួន: ${i.qty} ${i.unit}</small>
+                </div>
+                <div class="remove-btn" onclick="carts['${type}'].splice(${idx},1); renderCart('${type}')">✕</div>
             </div>
         `).join('');
     }
 
+    // បង្ហាញរូបភាព Preview
+    ['in', 'out'].forEach(type => {
+        document.getElementById(type + '-photo').onchange = function(e) {
+            const preview = document.getElementById(type + '-preview');
+            preview.innerHTML = '';
+            for (let f of e.target.files) {
+                const rd = new FileReader();
+                rd.onload = (ex) => { preview.innerHTML += `<img src="${ex.target.result}" class="preview-img">`; };
+                rd.readAsDataURL(f);
+            }
+        };
+    });
+
     async function submitData(type) {
-        const btn = document.getElementById(type + '-submit');
-        const loading = document.getElementById(type + '-loading');
         const date = document.getElementById(type + '-date').value;
         const depot = document.getElementById(type + '-depot').value;
         const zone = document.getElementById(type + '-zone').value;
+        const btn = document.getElementById(type + '-submit');
+        const loading = document.getElementById(type + '-loading');
 
-        if (!date || !depot || !zone || carts[type].length === 0) return alert("សូមបំពេញព័ត៌មានឱ្យគ្រប់");
+        if (!date || !depot || !zone || carts[type].length === 0) {
+            alert("សូមបំពេញព័ត៌មានឱ្យគ្រប់គ្រាន់ (ថ្ងៃខែ, ដេប៉ូ, ទីតាំង និងទំនិញ)");
+            return;
+        }
 
-        btn.disabled = true;
+        btn.style.display = 'none';
         loading.style.display = 'block';
 
         const images = [];
@@ -184,33 +262,45 @@
         const payload = {
             action: type === 'in' ? 'saveStockIn' : 'saveStockOut',
             date, depot, zone, items: carts[type], images,
-            user: window.Telegram.WebApp.initDataUnsafe?.user?.first_name || "Admin"
+            user: window.Telegram.WebApp.initDataUnsafe?.user?.first_name || "អ្នកប្រើប្រាស់"
         };
 
         try {
             const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
             const result = await res.json();
             if (result.status === 'success') {
-                alert("រក្សាទុកបានជោគជ័យ!");
+                alert("រក្សាទុកជោគជ័យ និងផ្ញើទៅ Telegram រួចរាល់!");
                 location.reload();
+            } else {
+                alert("កំហុស: " + result.message);
             }
-        } catch (e) { alert("មានកំហុស!"); }
-        btn.disabled = false;
+        } catch (e) {
+            alert("មិនអាចតភ្ជាប់ទៅកាន់ Server បានទេ!");
+        }
+        btn.style.display = 'block';
         loading.style.display = 'none';
     }
 
     function renderBalance(data) {
-        if (!data || data.length === 0) return;
-        let html = '<table><tr><th>Item</th><th>Qty</th><th>Unit</th></tr>';
+        const container = document.getElementById('balance-table');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999">មិនមានទិន្នន័យតុល្យភាព...</p>';
+            return;
+        }
+        
+        const headers = Object.keys(data[0]);
+        let html = '<table><tr>' + headers.map(h => `<th>${h.toUpperCase().replace(/_/g,' ')}</th>`).join('') + '</tr>';
         data.forEach(r => {
-            html += `<tr><td>${r.item_name}</td><td>${r.current_balance || r.balance || 0}</td><td>${r.unit || ''}</td></tr>`;
+            html += '<tr>' + headers.map(h => `<td>${r[h] !== null ? r[h] : 0}</td>`).join('') + '</tr>';
         });
-        document.getElementById('balance-table').innerHTML = html + '</table>';
+        container.innerHTML = html + '</table>';
     }
 
+    // ចាប់ផ្តើម App
     fetchData();
     document.getElementById('in-date').valueAsDate = new Date();
     document.getElementById('out-date').valueAsDate = new Date();
 </script>
+
 </body>
 </html>
