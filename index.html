@@ -120,7 +120,7 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzt4kWmVIYE0Xm9sqiav5MO8CUq1wiZoJCZRnWZwtTMPCwxVsaGf3VTiNxeca1Rpr3j/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjk6xQVvRoIbvfJ2dV2qrlHKRtUFmOf2h6952DLg4Yhco3w4f_BU0VFnbrLbEvr8z1/exec";
     let appData = { items: [], depots: [], zones: [], balance: [] };
     let carts = { in: [], out: [] };
     let selectedItem = null;
@@ -162,29 +162,6 @@
         const resBox = document.getElementById(type + '-results');
         
         input.oninput = () => {
-            const val = input.value.trim().toLowerCase();
-            if (val.length < 1) { resBox.style.display = 'none'; return; }
-            
-            const matches = appData.items.filter(i => {
-                const name = (i.item_name || "").toString().toLowerCase();
-                const code = (i.item_code || "").toString().toLowerCase();
-                return name.includes(val) || code.includes(val);
-            }).slice(0, 15); // បង្ហាញតែ 15 មុខដំបូង
-
-            if (matches.length > 0) {
-                resBox.innerHTML = matches.map(i => `
-                    <div class="item-row" onclick="selectItem('${type}','${i.item_code}','${i.item_name}','${i.unit}')">
-                        <div>${i.item_name}</div>
-                        <small>កូដ: ${i.item_code} | ខ្នាត: ${i.unit}</small>
-                    </div>
-                `).join('');
-                resBox.style.display = 'block';
-            } else {
-                resBox.innerHTML = '<div class="item-row">រកមិនឃើញទំនិញ...</div>';
-                resBox.style.display = 'block';
-            }
-        };
-    });
 
     function selectItem(type, code, name, unit) {
         selectedItem = { code, name, unit };
